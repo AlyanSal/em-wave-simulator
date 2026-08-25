@@ -3,7 +3,7 @@
 namespace em::memory {
 
 struct vector {
-  float x_, y_, z_;
+  float x_;
 };
 
 } // namespace em::memory
