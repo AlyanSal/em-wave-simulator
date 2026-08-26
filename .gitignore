@@ -1,5 +1,11 @@
 # CMake Build
 build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.a
+
 
 # Python & Virtual Environments
 .venv/

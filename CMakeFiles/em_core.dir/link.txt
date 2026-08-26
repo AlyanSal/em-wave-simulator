@@ -1,2 +1,0 @@
-/usr/bin/ar qc libem_core.a CMakeFiles/em_core.dir/src/kernel/Kernels.cpp.o CMakeFiles/em_core.dir/src/memory/Grid.cpp.o CMakeFiles/em_core.dir/src/simulation/Simulation.cpp.o
-/usr/bin/ranlib libem_core.a
