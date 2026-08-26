@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "Constants.hpp"
-#include "Vector.hpp"
 
 namespace em::memory {
 
@@ -15,12 +14,15 @@ class grid {
 public:
   grid(std::size_t cells);
 
+  std::vector<float>& Efield() { return Exfield_; }
+  std::vector<float>& Hfield() { return Hyfield_; }
+
 private:
   const std::size_t cells_;
   // const std::size_t cols_;
 
-  std::vector<vector> Exfield_;
-  std::vector<vector> Hyfield_;
+  std::vector<float> Exfield_;
+  std::vector<float> Hyfield_;
 };
 
 } // namespace em::memory

@@ -7,7 +7,7 @@ namespace em::memory {
  */
 grid::grid(const std::size_t cells)
     : cells_{cells},
-      Exfield_(cells, vector()),
-      Hyfield_(cells, vector()) {}
+      Exfield_(cells, 0.0f),
+      Hyfield_(cells, 0.0f) {}
 
 } // namespace em::memory

@@ -1,0 +1,4 @@
+/home/sah24/em-wave-simulator/CMakeFiles/em_core.dir
+/home/sah24/em-wave-simulator/CMakeFiles/em_wave_simulator.dir
+/home/sah24/em-wave-simulator/CMakeFiles/edit_cache.dir
+/home/sah24/em-wave-simulator/CMakeFiles/rebuild_cache.dir

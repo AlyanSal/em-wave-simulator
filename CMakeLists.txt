@@ -7,8 +7,8 @@ project(
   LANGUAGES CXX
 )
 
-# Enforce C++20 standard
-set(CMAKE_CXX_STANDARD 20)
+# Enforce C++23 standard
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -55,19 +55,23 @@ endif()
 # Core Library
 # ---------------------------------------------------------------------------
 add_library(em_core
-  src/memory/Grid.cpp
-  src/memory/Grid.hpp
-  src/memory/Vector.hpp
-  src/math/Constants.hpp
   src/kernel/Kernels.cpp
   src/kernel/Kernels.hpp
+  src/math/Constants.hpp
+  src/memory/Grid.cpp
+  src/memory/Grid.hpp
+  src/output/Output.hpp
+  src/simulation/Simulation.cpp
+  src/simulation/Simulation.hpp
 )
 
 target_include_directories(em_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/memory>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/math>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/memory>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/output>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/kernel>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/simulation>
 )
 
 target_link_libraries(em_core PUBLIC em_compiler_flags)

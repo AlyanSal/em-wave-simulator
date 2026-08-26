@@ -1,2 +1,14 @@
 # CMake Build
-build
+build/
+
+# Python & Virtual Environments
+.venv/
+__pycache__/
+*.pyc
+
+# Simulation Output & Media
+*.png
+*.gif
+*.mp4
+*.npz
+*.csv

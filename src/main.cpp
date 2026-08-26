@@ -1,3 +1,4 @@
+#include "Output.hpp"
 #include "Simulation.hpp"
 
 int main() {
@@ -5,7 +6,15 @@ int main() {
   const auto WIDTH{2.5f};
   const auto LENGTH{2.5f};
 
-  em::simulation::simulation simulation(FRQ, WIDTH, LENGTH);
+  em::sim::simulation simulation(FRQ, WIDTH, LENGTH);
+  Output writer("output.csv");
+
+  simulation.setup_simulation();
+
+  for (auto i{0uz}; i < 1500; ++i) {
+    simulation.step_simulation();
+    writer.write_frame(i, simulation.getE(), simulation.getH());
+  }
 
   return 0;
 }

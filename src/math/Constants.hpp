@@ -15,7 +15,7 @@ inline constexpr std::size_t divs{10};
 inline constexpr float c0{299'792'458.0};
 
 // permeability of free space
-inline constexpr float mu0{4e-7 / std::numbers::pi};
+inline constexpr float mu0{4e-7 * std::numbers::pi};
 
 // permittivity of free space
 inline constexpr float eps0{1.0 / (mu0 * c0 * c0)};

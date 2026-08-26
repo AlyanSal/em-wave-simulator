@@ -2,27 +2,24 @@
 
 #include <vector>
 
-#include "math/Constants.hpp"
-#include "memory/Vector.hpp"
+#include "Constants.hpp"
 
 namespace em::kernel {
 
 /**
  * Calculates the H-Field vectors for a time step into the future from its
  * current state
- *
- * TODO: Implement the function
  */
-void calculateFutureEField(std::vector<memory::vector>& EField,
-                           std::vector<memory::vector>& HField, float del_t,
+void calculateFutureEField(std::vector<float>& EField,
+                           std::vector<float>& HField, float del_t,
                            float del_x);
 
 /**
  * Calculates the E-Field vectors for a time step into the future from its
  * current state
  */
-void calculateFutrueHField(std::vector<memory::vector>& HField,
-                           std::vector<memory::vector>& EField, float del_t,
+void calculateFutureHField(std::vector<float>& HField,
+                           std::vector<float>& EField, float del_t,
                            float del_x);
 
 } // namespace em::kernel
