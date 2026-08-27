@@ -17,28 +17,36 @@ simulation::simulation(const float frequency, const float width,
       // dy_{length / cols_},
       dt_{dx_ / (2 * math::constants::c0)},
       cells_{rows_},
+      last_two(0.0f, 0.0f),
       grid_(cells_) {}
 
 void simulation::setup_simulation() {
   auto const max_amp{25};
-  auto& Efield{grid_.Hfield()};
+  auto& Efield{grid_.Efield()};
+  auto& eps{grid_.Eps()};
 
   auto midpoint{Efield.size() / 2};
+
+  for (auto i{midpoint + midpoint / 2}; i < Efield.size(); ++i) {
+    eps[i] = 4.0;
+  }
 
   const float sigma = 15.0f;
 
   for (auto i{0uz}; i < Efield.size(); ++i) {
-    float dist = static_cast<float>(static_cast<long long>(i) -
-                                    static_cast<long long>(midpoint));
+    auto dist = (static_cast<float>(i) - static_cast<float>(midpoint));
     Efield[i] = max_amp * std::exp(-(dist * dist) / (2.0f * sigma * sigma));
   }
 
-  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(), dt_, dx_);
+  kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
 }
 
 void simulation::step_simulation() {
-  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(), dt_, dx_);
+  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(), grid_.Eps(),
+                                dt_, dx_);
   kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
+
+  kernel::applyBoundaryCondition(grid_.Efield(), last_two);
 
   //   apply_hard_source();
 }

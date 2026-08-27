@@ -36,6 +36,8 @@ private:
 
   const std::size_t cells_;
 
+  std::pair<float, float> last_two;
+
   memory::grid grid_;
 };
 
