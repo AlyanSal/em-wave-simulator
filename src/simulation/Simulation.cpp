@@ -18,6 +18,7 @@ simulation::simulation(const float frequency, const float width,
       dt_{dx_ / (2 * math::constants::c0)},
       cells_{rows_},
       last_two(0.0f, 0.0f),
+      timestep_{},
       grid_(cells_) {}
 
 void simulation::setup_simulation() {
@@ -27,8 +28,8 @@ void simulation::setup_simulation() {
 
   auto midpoint{Efield.size() / 2};
 
-  for (auto i{midpoint + midpoint / 2}; i < Efield.size(); ++i) {
-    eps[i] = 4.0;
+  for (auto i{Efield.size() * 3 / 4}; i < Efield.size(); ++i) {
+    eps[i] = i - (Efield.size() * 3 / 4) + 1;
   }
 
   const float sigma = 15.0f;

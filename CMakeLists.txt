@@ -63,6 +63,7 @@ add_library(em_core
   src/output/Output.hpp
   src/simulation/Simulation.cpp
   src/simulation/Simulation.hpp
+  src/utilities/Timer.hpp
 )
 
 target_include_directories(em_core PUBLIC
@@ -72,6 +73,7 @@ target_include_directories(em_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/output>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/kernel>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/simulation>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/utilities>
 )
 
 target_link_libraries(em_core PUBLIC em_compiler_flags)

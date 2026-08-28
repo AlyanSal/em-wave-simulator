@@ -1,5 +1,6 @@
 #include "Output.hpp"
 #include "Simulation.hpp"
+#include "Timer.hpp"
 
 int main() {
   const auto FRQ{2.4e9f};
@@ -9,12 +10,18 @@ int main() {
   em::sim::simulation simulation(FRQ, WIDTH, LENGTH);
   Output writer("output.csv");
 
-  simulation.setup_simulation();
+  auto setup{[&]() -> void { simulation.setup_simulation(); }};
 
-  for (auto i{0uz}; i < 1500; ++i) {
-    simulation.step_simulation();
-    writer.write_frame(i, simulation.getE(), simulation.getH());
-  }
+  em::util::timer(setup);
+
+  auto run{[&]() -> void {
+    for (auto i{0uz}; i < 1500; ++i) {
+      simulation.step_simulation();
+      writer.write_frame(i, simulation.getE(), simulation.getH());
+    }
+  }};
+
+  em::util::timer(run);
 
   return 0;
 }
