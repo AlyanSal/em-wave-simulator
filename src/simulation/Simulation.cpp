@@ -29,14 +29,14 @@ auto simulation::setup_simulation(
                                     conductivity_function, grid_.Permittivity(),
                                     grid_.Conductance());
 
-  kernel::precomputeEFieldCalculationCoefficients(
-      grid_.Permittivity(), grid_.Conductance(), grid_.DampCoeff(),
-      grid_.SourceCoeff(), dt_, dx_);
+  kernel::precomputeDEICoefficients(grid_.Permittivity(), grid_.Conductance(),
+                                    grid_.ECoeff(), grid_.ICoeff(), dt_);
 }
 
 auto simulation::step_simulation() -> void {
-  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(),
-                                grid_.DampCoeff(), grid_.SourceCoeff());
+  kernel::calculateFutureDEIFields(grid_.Dfield(), grid_.Efield(),
+                                   grid_.Ifield(), grid_.Hfield(),
+                                   grid_.ECoeff(), grid_.ICoeff(), dt_, dx_);
   kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
 
   kernel::applyBoundaryCondition(grid_.Efield(), last_two);

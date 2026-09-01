@@ -11,14 +11,21 @@ namespace em::kernel {
  * Calculates the H-Field vectors for a time step into the future from its
  * current state
  */
-inline auto calculateFutureEField(std::vector<float>& EField,
-                                  std::vector<float>& HField,
-                                  std::vector<float>& damp_coeff,
-                                  std::vector<float>& source_coeff) noexcept
-    -> void {
-  for (auto i{1uz}; i < EField.size() - 1; ++i) {
-    EField[i] = (damp_coeff[i] * EField[i]) -
-                (source_coeff[i] * (HField[i] - HField[i - 1]));
+inline auto calculateFutureDEIFields(std::vector<float>& DField,
+                                     std::vector<float>& EField,
+                                     std::vector<float>& IField,
+                                     const std::vector<float>& HField,
+                                     const std::vector<float>& e_den_coeff,
+                                     const std::vector<float>& i_mult_coeff,
+                                     const float del_t,
+                                     const float del_x) noexcept -> void {
+  const float curl_coeff{del_t / del_x};
+  for (auto i{0uz}; i < DField.size(); ++i) {
+    DField[i] -= curl_coeff * (HField[i] - HField[i - 1]);
+
+    EField[i] = (DField[i] - IField[i]) / e_den_coeff[i];
+
+    IField[i] = IField[i] + (i_mult_coeff[i] * EField[i]);
   }
 }
 
@@ -57,19 +64,16 @@ inline auto initializeFieldConditions(
   }
 }
 
-inline auto precomputeEFieldCalculationCoefficients(
-    const std::vector<float>& permittivity,
-    const std::vector<float>& conductivity, std::vector<float>& damp_coeff,
-    std::vector<float>& source_coeff, const float del_t, const float del_x)
-    -> void {
-  const float electric_factor{del_t / (2 * math::constants::eps0)};
-
+inline auto precomputeDEICoefficients(const std::vector<float>& permittivity,
+                                      const std::vector<float>& conductivity,
+                                      std::vector<float>& e_den_coeff,
+                                      std::vector<float>& i_mult_coeff,
+                                      const float del_t) noexcept -> void {
   for (auto i{0uz}; i < permittivity.size(); ++i) {
-    const float rel_factor{electric_factor *
-                           (conductivity[i] / permittivity[i])};
-    damp_coeff[i] = (1 - rel_factor) / (1 + rel_factor);
-    source_coeff[i] = del_t / (del_x * permittivity[i] * math::constants::eps0 *
-                               (1.0f + rel_factor));
+    const float sig_dt_eps0 = (conductivity[i] * del_t) / math::constants::eps0;
+
+    i_mult_coeff[i] = sig_dt_eps0;
+    e_den_coeff[i] = permittivity[i] + sig_dt_eps0;
   }
 }
 

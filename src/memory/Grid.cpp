@@ -7,11 +7,13 @@ namespace em::memory {
  */
 grid::grid(const std::size_t cells)
     : cells_{cells},
-      Exfield_(cells, 0.0f),
-      Hyfield_(cells, 0.0f),
+      Efield_(cells, 0.0f),
+      Hfield_(cells, 0.0f),
+      Dfield_(cells, 0.0f),
+      Ifield_(cells, 0.0f),
       permittivity_(cells, 1.0f),
       conductance_(cells, 0.0f),
-      damp_coeff_(cells, 0.0f),
-      source_coeff_(cells, 0.0f) {}
+      e_den_coeff_(cells, 0.0f),
+      i_mult_coeff_(cells, 0.0f) {}
 
 } // namespace em::memory
