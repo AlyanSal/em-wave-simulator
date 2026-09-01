@@ -14,16 +14,20 @@ class simulation {
 public:
   simulation(float frequency, float width, float length, float largest_eps);
 
-  void setup_simulation();
+  void setup_simulation(std::function<float(float)>& permittivity_function,
+                        std::function<float(float)>& conductivity_function);
 
   void step_simulation();
 
-  void add_source(source::Source source, float x);
+  void add_source(source::Source source, float pos_x);
 
   void handle_sources();
 
   auto getE() -> std::vector<float>& { return grid_.Efield(); }
   auto getH() -> std::vector<float>& { return grid_.Hfield(); }
+
+  void setEpsilonDist();
+  void setConductanceDist();
 
 private:
   const float width_;

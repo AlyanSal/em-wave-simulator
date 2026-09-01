@@ -14,17 +14,23 @@ class grid {
 public:
   grid(std::size_t cells);
 
-  std::vector<float>& Efield() { return Exfield_; }
-  std::vector<float>& Hfield() { return Hyfield_; }
-  std::vector<float>& Eps() { return eps_; }
+  auto Efield() -> std::vector<float>& { return Exfield_; }
+  auto Hfield() -> std::vector<float>& { return Hyfield_; }
+  auto Permittivity() -> std::vector<float>& { return permittivity_; }
+  auto Conductance() -> std::vector<float>& { return conductance_; }
+  auto DampCoeff() -> std::vector<float>& { return damp_coeff_; }
+  auto SourceCoeff() -> std::vector<float>& { return source_coeff_; }
 
 private:
   const std::size_t cells_;
   // const std::size_t cols_;
 
   std::vector<float> Exfield_;
-  std::vector<float> eps_;
   std::vector<float> Hyfield_;
+  std::vector<float> permittivity_;
+  std::vector<float> conductance_;
+  std::vector<float> damp_coeff_;
+  std::vector<float> source_coeff_;
 };
 
 } // namespace em::memory

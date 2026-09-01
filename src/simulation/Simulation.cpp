@@ -22,18 +22,21 @@ simulation::simulation(const float frequency, const float width,
       last_two(0.0f, 0.0f),
       grid_(cells_) {}
 
-auto simulation::setup_simulation() -> void {
-  auto& Efield{grid_.Efield()};
-  auto& eps{grid_.Eps()};
+auto simulation::setup_simulation(
+    std::function<float(float)>& permittivity_function,
+    std::function<float(float)>& conductivity_function) -> void {
+  kernel::initializeFieldConditions(dx_, permittivity_function,
+                                    conductivity_function, grid_.Permittivity(),
+                                    grid_.Conductance());
 
-  for (auto i{Efield.size() * 3 / 4}; i < Efield.size(); ++i) {
-    eps[i] = 4;
-  }
+  kernel::precomputeEFieldCalculationCoefficients(
+      grid_.Permittivity(), grid_.Conductance(), grid_.DampCoeff(),
+      grid_.SourceCoeff(), dt_, dx_);
 }
 
 auto simulation::step_simulation() -> void {
-  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(), grid_.Eps(),
-                                dt_, dx_, 0.04f);
+  kernel::calculateFutureEField(grid_.Efield(), grid_.Hfield(),
+                                grid_.DampCoeff(), grid_.SourceCoeff());
   kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
 
   kernel::applyBoundaryCondition(grid_.Efield(), last_two);
@@ -52,9 +55,9 @@ auto simulation::handle_sources() -> void {
   }
 }
 
-auto simulation::add_source(source::Source source, const float posx) -> void {
+auto simulation::add_source(source::Source source, const float pos_x) -> void {
   sources_.emplace_back(std::move(source),
-                        static_cast<std::size_t>(posx / dx_));
+                        static_cast<std::size_t>(pos_x / dx_));
 }
 
 } // namespace em::sim
