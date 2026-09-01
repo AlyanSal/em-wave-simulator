@@ -5,6 +5,5 @@ modernize-*,
 performance-*,
 readability-*,
 -readability-uppercase-literal-suffix,
--modernize-use-trailing-return-type,
 -bugprone-easily-swappable-parameters
 '

@@ -55,7 +55,6 @@ endif()
 # Core Library
 # ---------------------------------------------------------------------------
 add_library(em_core
-  src/kernel/Kernels.cpp
   src/kernel/Kernels.hpp
   src/math/Constants.hpp
   src/memory/Grid.cpp
@@ -68,10 +67,10 @@ add_library(em_core
 
 target_include_directories(em_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/kernel>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/math>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/memory>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/output>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/kernel>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/simulation>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/utilities>
 )

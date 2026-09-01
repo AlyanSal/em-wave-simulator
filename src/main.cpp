@@ -2,15 +2,18 @@
 #include "Simulation.hpp"
 #include "Timer.hpp"
 
-int main() {
+auto main() -> int {
   const auto FRQ{2.4e9f};
   const auto WIDTH{2.5f};
   const auto LENGTH{2.5f};
+  const auto LARGEST_EPSILON{4.0f};
 
-  em::sim::simulation simulation(FRQ, WIDTH, LENGTH);
+  em::sim::simulation simulation(FRQ, WIDTH, LENGTH, LARGEST_EPSILON);
   Output writer("output.csv");
 
   auto setup{[&]() -> void { simulation.setup_simulation(); }};
+
+  simulation.add_source(em::source::sin1D, 0.2f);
 
   em::util::timer(setup);
 

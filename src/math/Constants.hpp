@@ -7,7 +7,7 @@ namespace em::math::constants {
 /* --- Simulation Constants --- */
 
 // Divisions per wavelength in memory grid
-inline constexpr std::size_t divs{10};
+inline constexpr std::size_t divs{20};
 
 /* --- Mathematical Constants --- */
 
