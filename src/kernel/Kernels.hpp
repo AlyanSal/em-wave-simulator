@@ -19,8 +19,8 @@ inline auto calculateFutureDEIFields(std::vector<float>& DField,
                                      const std::vector<float>& i_mult_coeff,
                                      const float del_t,
                                      const float del_x) noexcept -> void {
-  const float curl_coeff{del_t / del_x};
-  for (auto i{0uz}; i < DField.size(); ++i) {
+  const float curl_coeff{del_t / (del_x * math::constants::eps0)};
+  for (auto i{1uz}; i < DField.size(); ++i) {
     DField[i] -= curl_coeff * (HField[i] - HField[i - 1]);
 
     EField[i] = (DField[i] - IField[i]) / e_den_coeff[i];
