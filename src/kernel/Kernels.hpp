@@ -53,6 +53,9 @@ inline auto applyBoundaryCondition(std::vector<float>& Efield,
   last_two.first = Efield[1];
 }
 
+/**
+ * Initializes the fields permittivity and conductivity distributions
+ */
 inline auto initializeFieldConditions(
     const float dx_, std::function<float(float)>& permittivity_distribution,
     std::function<float(float)>& conductivity_distribution,
@@ -64,6 +67,10 @@ inline auto initializeFieldConditions(
   }
 }
 
+/**
+ * Precomputes the coefficients necessary for the D, E, and I
+ * ElectroMagneticFields
+ */
 inline auto precomputeDEICoefficients(const std::vector<float>& permittivity,
                                       const std::vector<float>& conductivity,
                                       std::vector<float>& e_den_coeff,
@@ -74,6 +81,24 @@ inline auto precomputeDEICoefficients(const std::vector<float>& permittivity,
 
     i_mult_coeff[i] = sig_dt_eps0;
     e_den_coeff[i] = permittivity[i] + sig_dt_eps0;
+  }
+}
+
+inline auto updateFrequencyDomain(std::vector<float>& real_E,
+                                  std::vector<float>& imag_E,
+                                  const std::vector<float>& EField,
+                                  const float current_time,
+                                  const float target_frequency) noexcept
+    -> void {
+  const float omega_t{2.0f * math::constants::pi * target_frequency *
+                      current_time};
+
+  const float cos_val{std::cos(omega_t)};
+  const float sin_val{std::sin(omega_t)};
+
+  for (auto i{0uz}; i < EField.size(); ++i) {
+    real_E[i] += EField[i] * cos_val;
+    imag_E[i] -= EField[i] * sin_val;
   }
 }
 

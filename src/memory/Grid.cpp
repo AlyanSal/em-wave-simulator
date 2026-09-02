@@ -14,6 +14,8 @@ grid::grid(const std::size_t cells)
       permittivity_(cells, 1.0f),
       conductance_(cells, 0.0f),
       e_den_coeff_(cells, 0.0f),
-      i_mult_coeff_(cells, 0.0f) {}
+      i_mult_coeff_(cells, 0.0f),
+      real_E_(cells, 0.0f),
+      imag_E_(cells, 0.0f) {}
 
 } // namespace em::memory

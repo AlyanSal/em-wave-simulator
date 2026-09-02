@@ -40,6 +40,9 @@ auto simulation::step_simulation() -> void {
                                    grid_.Ifield(), grid_.Hfield(),
                                    grid_.ECoeff(), grid_.ICoeff(), dt_, dx_);
   kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
+  kernel::updateFrequencyDomain(grid_.RealE(), grid_.ImagE(), grid_.Efield(),
+                                dt_ * static_cast<float>(timestep_),
+                                frequency_);
 
   kernel::applyBoundaryCondition(grid_.Efield(), last_two);
 
@@ -48,7 +51,7 @@ auto simulation::step_simulation() -> void {
 
 auto simulation::handle_sources() -> void {
   const float time = static_cast<float>(timestep_) * dt_;
-  const float omega_t = 2.0f * std::numbers::pi_v<float> * frequency_ * time;
+  const float omega_t = 2.0f * math::constants::pi * frequency_ * time;
 
   for (auto const& [src, idx] : sources_) {
     grid_.Dfield()[idx] += src(omega_t);

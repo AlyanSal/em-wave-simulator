@@ -22,6 +22,8 @@ public:
   auto Conductance() -> std::vector<float>& { return conductance_; }
   auto ECoeff() -> std::vector<float>& { return e_den_coeff_; }
   auto ICoeff() -> std::vector<float>& { return i_mult_coeff_; }
+  auto RealE() -> std::vector<float>& { return real_E_; }
+  auto ImagE() -> std::vector<float>& { return imag_E_; }
 
 private:
   const std::size_t cells_;
@@ -34,6 +36,8 @@ private:
   std::vector<float> conductance_;
   std::vector<float> e_den_coeff_;
   std::vector<float> i_mult_coeff_;
+  std::vector<float> real_E_;
+  std::vector<float> imag_E_;
 };
 
 } // namespace em::memory
