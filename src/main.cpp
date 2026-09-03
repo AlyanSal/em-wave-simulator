@@ -16,11 +16,20 @@ auto main() -> int {
     return 0.04f * (pos_x > WIDTH / 2);
   }};
 
+  std::function<float(float)> chi1_func{[WIDTH](const float pos_x) -> float {
+    return 2.0f * (pos_x > WIDTH / 2);
+  }};
+
+  std::function<float(float)> t0_func{[WIDTH](const float pos_x) -> float {
+    return 1e-6f * (pos_x > WIDTH / 2);
+  }};
+
   em::sim::simulation simulation(FRQ, WIDTH, LENGTH, LARGEST_EPSILON);
   Output writer("output.csv");
 
-  auto setup{
-      [&]() -> void { simulation.setup_simulation(perm_func, cond_func); }};
+  auto setup{[&]() -> void {
+    simulation.setup_simulation(perm_func, cond_func, chi1_func, t0_func);
+  }};
 
   simulation.add_source(em::source::sin1D, 0.2f);
 

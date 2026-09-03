@@ -15,7 +15,9 @@ public:
   simulation(float frequency, float width, float length, float largest_eps);
 
   void setup_simulation(std::function<float(float)>& permittivity_function,
-                        std::function<float(float)>& conductivity_function);
+                        std::function<float(float)>& conductivity_function,
+                        std::function<float(float)>& chi1_function,
+                        std::function<float(float)>& t0_function);
 
   void step_simulation();
 

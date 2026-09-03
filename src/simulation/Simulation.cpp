@@ -24,22 +24,29 @@ simulation::simulation(const float frequency, const float width,
 
 auto simulation::setup_simulation(
     std::function<float(float)>& permittivity_function,
-    std::function<float(float)>& conductivity_function) -> void {
-  kernel::initializeFieldConditions(dx_, permittivity_function,
-                                    conductivity_function, grid_.Permittivity(),
-                                    grid_.Conductance());
+    std::function<float(float)>& conductivity_function,
+    std::function<float(float)>& chi1_function,
+    std::function<float(float)>& t0_function) -> void {
+  kernel::initializeFieldConditions(
+      permittivity_function, conductivity_function, chi1_function, t0_function,
+      grid_.Permittivity(), grid_.Conductance(), grid_.Chi_1(), grid_.T_0(),
+      dx_);
 
-  kernel::precomputeDEICoefficients(grid_.Permittivity(), grid_.Conductance(),
-                                    grid_.ECoeff(), grid_.ICoeff(), dt_);
+  kernel::precomputeDEISCoefficients(
+      grid_.Permittivity(), grid_.Conductance(), grid_.Chi_1(), grid_.T_0(),
+      grid_.ECoeff(), grid_.ICoeff(), grid_.SMCoeff(), grid_.SDCoeff(), dt_);
 }
 
 auto simulation::step_simulation() -> void {
   handle_sources();
 
-  kernel::calculateFutureDEIFields(grid_.Dfield(), grid_.Efield(),
-                                   grid_.Ifield(), grid_.Hfield(),
-                                   grid_.ECoeff(), grid_.ICoeff(), dt_, dx_);
+  kernel::calculateFutureDEISFields(
+      grid_.Dfield(), grid_.Efield(), grid_.Ifield(), grid_.Sfield(),
+      grid_.Hfield(), grid_.ECoeff(), grid_.ICoeff(), grid_.SMCoeff(),
+      grid_.SDCoeff(), dt_, dx_);
+
   kernel::calculateFutureHField(grid_.Hfield(), grid_.Efield(), dt_, dx_);
+
   kernel::updateFrequencyDomain(grid_.RealE(), grid_.ImagE(), grid_.Efield(),
                                 dt_ * static_cast<float>(timestep_),
                                 frequency_);
