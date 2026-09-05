@@ -16,16 +16,20 @@ public:
       std::print(std::cout, "EM:: could not open file: {}", filename);
     }
 
-    file << "timestep,cell,Ex,Hy" << '\n';
+    file << "timestep,row,col,Ez,Hx,Hy" << '\n';
   }
 
   ~Output() { file.close(); };
 
-  void write_frame(std::size_t timestep, std::vector<float>& Efield,
-                   std::vector<float>& Hfield) {
-    for (auto i{0uz}; i < Efield.size(); ++i) {
-      file << timestep << ',' << i << ',' << Efield[i] << ',' << Hfield[i]
-           << '\n';
+  void write_frame(const std::size_t timestep, const std::size_t Nx,
+                   const std::size_t Ny, const std::vector<float>& Ez,
+                   const std::vector<float>& Hx, const std::vector<float>& Hy) {
+    for (auto j{0uz}; j < Ny; ++j) {
+      for (auto i{0uz}; i < Nx; ++i) {
+        const std::size_t idx{(j * Nx) + i};
+        file << timestep << ',' << i << ',' << j << ',' << Ez[idx] << ','
+             << Hx[idx] << ',' << Hy[idx] << '\n';
+      }
     }
   }
 };

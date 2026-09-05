@@ -26,8 +26,12 @@ public:
 
   void handle_sources();
 
-  auto getE() -> std::vector<float>& { return grid_.Ezfield(); }
-  auto getH() -> std::vector<float>& { return grid_.Hxfield(); }
+  auto getEz() -> std::vector<float>& { return grid_.Ezfield(); }
+  auto getHx() -> std::vector<float>& { return grid_.Hxfield(); }
+  auto getHy() -> std::vector<float>& { return grid_.Hyfield(); }
+
+  auto Rows() -> std::size_t { return rows_; }
+  auto Cols() -> std::size_t { return cols_; }
 
   void setEpsilonDist();
   void setConductanceDist();
