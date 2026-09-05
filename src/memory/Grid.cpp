@@ -7,8 +7,9 @@ namespace em::memory {
  */
 grid::grid(const std::size_t cells)
     : cells_{cells},
-      Efield_(cells, 0.0f),
-      Hfield_(cells, 0.0f),
+      Ezfield_(cells, 0.0f),
+      Hxfield_(cells, 0.0f),
+      Hyfield_(cells, 0.0f),
       Dfield_(cells, 0.0f),
       Ifield_(cells, 0.0f),
       Sfield_(cells, 0.0f),

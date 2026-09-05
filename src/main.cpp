@@ -8,21 +8,17 @@ auto main() -> int {
   const auto LENGTH{2.5f};
   const auto LARGEST_EPSILON{4.0f};
 
-  std::function<float(float)> perm_func{[WIDTH](const float pos_x) -> float {
-    return 1.0f + (3.0f * (pos_x > WIDTH / 2));
-  }};
+  std::function<float(float, float)> perm_func{
+      [WIDTH](const float pos_x, const float pos_y) -> float { return 1.0f; }};
 
-  std::function<float(float)> cond_func{[WIDTH](const float pos_x) -> float {
-    return 0.04f * (pos_x > WIDTH / 2);
-  }};
+  std::function<float(float, float)> cond_func{
+      [WIDTH](const float pos_x, const float pos_y) -> float { return 0.0f; }};
 
-  std::function<float(float)> chi1_func{[WIDTH](const float pos_x) -> float {
-    return 2.0f * (pos_x > WIDTH / 2);
-  }};
+  std::function<float(float, float)> chi1_func{
+      [WIDTH](const float pos_x, const float pos_y) -> float { return 0.0f; }};
 
-  std::function<float(float)> t0_func{[WIDTH](const float pos_x) -> float {
-    return 1e-6f * (pos_x > WIDTH / 2);
-  }};
+  std::function<float(float, float)> t0_func{
+      [WIDTH](const float pos_x, const float pos_y) -> float { return 1.0f; }};
 
   em::sim::simulation simulation(FRQ, WIDTH, LENGTH, LARGEST_EPSILON);
   Output writer("output.csv");

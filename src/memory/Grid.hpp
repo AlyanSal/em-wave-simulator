@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
@@ -14,8 +15,9 @@ class grid {
 public:
   grid(std::size_t cells);
 
-  auto Efield() -> std::vector<float>& { return Efield_; }
-  auto Hfield() -> std::vector<float>& { return Hfield_; }
+  auto Ezfield() -> std::vector<float>& { return Ezfield_; }
+  auto Hxfield() -> std::vector<float>& { return Hxfield_; }
+  auto Hyfield() -> std::vector<float>& { return Hyfield_; }
   auto Dfield() -> std::vector<float>& { return Dfield_; }
   auto Ifield() -> std::vector<float>& { return Ifield_; }
   auto Sfield() -> std::vector<float>& { return Sfield_; }
@@ -33,8 +35,9 @@ public:
 private:
   const std::size_t cells_;
 
-  std::vector<float> Efield_;
-  std::vector<float> Hfield_;
+  std::vector<float> Ezfield_;
+  std::vector<float> Hxfield_;
+  std::vector<float> Hyfield_;
   std::vector<float> Dfield_;
   std::vector<float> Ifield_;
   std::vector<float> Sfield_;
