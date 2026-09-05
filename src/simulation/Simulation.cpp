@@ -10,12 +10,11 @@ simulation::simulation(const float frequency, const float width,
       frequency_{frequency},
       smallest_wavelength_{(math::constants::c0 / std::sqrt(largest_eps)) /
                            frequency},
-      dx_{static_cast<float>(math::constants::divs) / smallest_wavelength_},
+      dx_{smallest_wavelength_ / static_cast<float>(math::constants::divs)},
       dt_{dx_ / (2 * math::constants::c0)},
       rows_{static_cast<std::size_t>(width / dx_)},
       cols_{static_cast<std::size_t>(length / dx_)},
       cells_{rows_ * cols_},
-      last_two(0.0f, 0.0f),
       grid_(rows_ * cols_) {}
 
 auto simulation::setup_simulation(
@@ -49,8 +48,6 @@ auto simulation::step_simulation() -> void {
       cells_, grid_.RealE(), grid_.ImagE(), grid_.Ezfield(),
       dt_ * static_cast<float>(timestep_), frequency_);
 
-  kernel::applyBoundaryCondition(grid_.Ezfield(), last_two);
-
   ++timestep_;
 }
 
@@ -64,9 +61,10 @@ auto simulation::handle_sources() -> void {
 }
 
 auto simulation::add_source(std::function<float(float)> source,
-                            const float pos_x) -> void {
-  sources_.emplace_back(std::move(source),
-                        static_cast<std::size_t>(pos_x / dx_));
+                            const float pos_x, const float pos_y) -> void {
+  const auto i{static_cast<std::size_t>(pos_x / dx_)};
+  const auto j{static_cast<std::size_t>(pos_y / dx_)};
+  sources_.emplace_back(std::move(source), j * cols_ + i);
 }
 
 } // namespace em::sim

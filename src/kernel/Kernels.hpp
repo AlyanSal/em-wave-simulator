@@ -22,19 +22,19 @@ inline auto calculateFutureDEISFields(
     const float del_x) noexcept -> void {
   const float curl_coeff{del_t / (del_x * math::constants::eps0)};
 
-  for (auto j{1uz}; j < Ny; ++j) {
-    for (auto i{1uz}; i < Nx; ++i) {
-      const std::size_t idx{j * Nx + i};
+  for (auto j{1uz}; j < Ny - 1; ++j) {
+    for (auto i{1uz}; i < Nx - 1; ++i) {
+      const std::size_t idx{(j * Nx) + i};
       const std::size_t idx_im1{idx - 1};
-      const std::size_t idx_jm1{idx - j};
+      const std::size_t idx_jm1{idx - Nx};
 
       Dz[idx] +=
           curl_coeff * ((Hy[idx] - Hy[idx_im1]) - (Hx[idx] - Hx[idx_jm1]));
 
-      Ez[idx] += (Dz[idx] - Iz[idx] - (s_decay_coeff[idx] * Sz[idx])) /
-                 e_den_coeff[idx];
+      Ez[idx] = (Dz[idx] - Iz[idx] - (s_decay_coeff[idx] * Sz[idx])) /
+                e_den_coeff[idx];
 
-      Iz[idx] += (i_mult_coeff[idx] + Ez[idx]);
+      Iz[idx] += (i_mult_coeff[idx] * Ez[idx]);
 
       Sz[idx] = (s_decay_coeff[idx] * Sz[idx]) + (s_mult_coeff[idx] * Ez[idx]);
     }
@@ -52,27 +52,20 @@ inline auto calculateFutureHField(const std::size_t Nx, const std::size_t Ny,
                                   const float del_x) noexcept -> void {
   const float factor = del_t / (del_x * math::constants::mu0);
   for (auto j{0uz}; j < Ny - 1; ++j) {
-    for (auto i{0uz}; i < Nx - 1; ++i) {
-      const std::size_t idx{j * Nx + i};
-      const std::size_t idx_ip1{idx + 1};
-      const std::size_t idx_jp1{idx + j};
+    for (auto i{0uz}; i < Nx; ++i) {
+      const std::size_t idx{(j * Nx) + i};
 
-      Hx[idx] += factor * (Ez[idx] - Ez[idx_jp1]);
-
-      Hy[idx] += factor * (Ez[idx_ip1] - Ez[idx]);
+      Hx[idx] += factor * (Ez[idx] - Ez[idx + Nx]);
     }
   }
-}
 
-/**
- * Approximates a boundary condition
- */
-inline auto applyBoundaryCondition(std::vector<float>& Efield,
-                                   std::pair<float, float>& last_two) noexcept
-    -> void {
-  Efield[0] = last_two.second;
-  last_two.second = last_two.first;
-  last_two.first = Efield[1];
+  for (auto j{0uz}; j < Ny; ++j) {
+    for (auto i{0uz}; i < Nx - 1; ++i) {
+      const std::size_t idx{(j * Nx) + i};
+
+      Hy[idx] += factor * (Ez[idx + 1] - Ez[idx]);
+    }
+  }
 }
 
 /**
@@ -88,15 +81,16 @@ inline auto initializeFieldConditions(
     std::vector<float>& chi_1, std::vector<float>& t_0,
     const float dx_) noexcept -> void {
   for (auto j{0uz}; j < Ny; ++j) {
-    const float pos_x{static_cast<float>(j) * dx_};
+    const float pos_y{static_cast<float>(j) * dx_};
     for (auto i{0uz}; i < Nx; ++i) {
-      const float pos_y{static_cast<float>(i) * dx_};
-      permittivity[i] = permittivity_distribution(pos_x, pos_y);
-      conductivity[i] = conductivity_distribution(pos_x, pos_y);
-      chi_1[i] = chi_1_distribution(pos_x, pos_y);
+      const float pos_x{static_cast<float>(i) * dx_};
+      const std::size_t idx{j * Nx + i};
+      permittivity[idx] = permittivity_distribution(pos_x, pos_y);
+      conductivity[idx] = conductivity_distribution(pos_x, pos_y);
+      chi_1[idx] = chi_1_distribution(pos_x, pos_y);
 
       const float t0_val{t_0_distribution(pos_x, pos_y)};
-      t_0[i] = (t0_val == 0.0f) ? 1.0f : t0_val;
+      t_0[idx] = (t0_val == 0.0f) ? 1.0f : t0_val;
     }
   }
 }

@@ -22,7 +22,7 @@ public:
 
   void step_simulation();
 
-  void add_source(std::function<float(float)> source, float pos_x);
+  void add_source(std::function<float(float)> source, float pos_x, float pos_y);
 
   void handle_sources();
 
@@ -49,8 +49,6 @@ private:
   std::vector<std::pair<std::function<float(float)>, std::size_t>> sources_;
 
   std::size_t timestep_{};
-
-  std::pair<float, float> last_two;
 
   memory::grid grid_;
 };
