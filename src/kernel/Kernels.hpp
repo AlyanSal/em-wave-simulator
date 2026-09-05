@@ -72,7 +72,7 @@ inline auto calculateFutureHField(const std::size_t Nx, const std::size_t Ny,
  * Initializes the fields permittivity and conductivity distributions
  */
 inline auto initializeFieldConditions(
-    const std::size_t Nx, const std::size_t Ny, // NOLINT
+    const std::size_t Nx, const std::size_t Ny,
     std::function<float(float, float)>& permittivity_distribution,
     std::function<float(float, float)>& conductivity_distribution,
     std::function<float(float, float)>& chi_1_distribution,
@@ -84,7 +84,7 @@ inline auto initializeFieldConditions(
     const float pos_y{static_cast<float>(j) * dx_};
     for (auto i{0uz}; i < Nx; ++i) {
       const float pos_x{static_cast<float>(i) * dx_};
-      const std::size_t idx{j * Nx + i};
+      const std::size_t idx{(j * Nx) + i};
       permittivity[idx] = permittivity_distribution(pos_x, pos_y);
       conductivity[idx] = conductivity_distribution(pos_x, pos_y);
       chi_1[idx] = chi_1_distribution(pos_x, pos_y);
@@ -117,13 +117,10 @@ inline auto precomputeDEISCoefficients(
   }
 }
 
-inline auto updateFrequencyDomain(const std::size_t N, // NOLINT
-                                  std::vector<float>& real_E,
-                                  std::vector<float>& imag_E,
-                                  const std::vector<float>& EField,
-                                  const float current_time,
-                                  const float target_frequency) noexcept
-    -> void {
+inline auto updateFrequencyDomain(
+    const std::size_t N, std::vector<float>& real_E, std::vector<float>& imag_E,
+    const std::vector<float>& EField, const float current_time,
+    const float target_frequency) noexcept -> void {
   const float omega_t{2.0f * math::constants::pi * target_frequency *
                       current_time};
 

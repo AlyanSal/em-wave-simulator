@@ -19,7 +19,7 @@ def load_data(
 ):
     """
     Load simulation data from CSV (tabular or matrix format).
-    Returns (e_field, h_field, is_2d, (rows, cols)).
+    Returns (e_field, h_field, is_2d, (rows, cols), timesteps).
     For 2D: fields have shape (num_steps, rows, cols)
     For 1D: fields have shape (num_steps, num_cells)
     """
@@ -48,8 +48,6 @@ def load_data(
         if raw.ndim == 1:
             raw = raw.reshape(1, -1)
 
-        num_steps = int(raw[:, 0].max()) + 1
-
         # Check for explicit 2D coordinate columns (e.g. timestep, row, col, ...)
         if ("row" in headers and "col" in headers) or ("y" in headers and "x" in headers):
             r_idx = headers.index("row") if "row" in headers else headers.index("y")
@@ -69,6 +67,16 @@ def load_data(
             e_col = 2
             h_col = 3 if raw.shape[1] > 3 else None
 
+        num_steps = raw.shape[0] // num_cells
+        if num_steps == 0:
+            raise ValueError(
+                f"File contains {raw.shape[0]} rows, which is less than 1 frame ({num_cells} cells)."
+            )
+
+        valid_len = num_steps * num_cells
+        raw = raw[:valid_len]
+        timesteps = raw[::num_cells, 0].astype(int)
+
         e_raw = raw[:, e_col]
         h_raw = (
             raw[:, h_col]
@@ -81,6 +89,7 @@ def load_data(
         if raw.ndim == 1:
             raw = raw.reshape(1, -1)
         num_steps, num_cells = raw.shape
+        timesteps = np.arange(num_steps)
         e_raw = raw.flatten()
         h_raw = np.zeros_like(e_raw)
 
@@ -112,12 +121,13 @@ def load_data(
         grid_dim = (1, num_cells)
         is_2d = False
 
-    return e_field, h_field, is_2d, grid_dim
+    return e_field, h_field, is_2d, grid_dim, timesteps
 
 
 def play_simulation_2d(
     ez: np.ndarray,
     h: np.ndarray,
+    timesteps: np.ndarray | None = None,
     interval: int = 20,
     save_path: str | None = None,
     fps: int = 30,
@@ -127,6 +137,8 @@ def play_simulation_2d(
 ):
     """Plays the frames as animated 2D heatmaps (Ez and H)."""
     num_steps, ny, nx = ez.shape
+    if timesteps is None:
+        timesteps = np.arange(num_steps)
 
     e_max = float(np.max(np.abs(ez)))
     e_max = 1.0 if (e_max == 0.0 or np.isnan(e_max)) else e_max * 1.15
@@ -177,8 +189,9 @@ def play_simulation_2d(
         cbar_h = fig.colorbar(im_h, ax=ax_h, shrink=0.8, pad=0.03)
         cbar_h.set_label("A/m", rotation=270, labelpad=15)
 
+    t0 = timesteps[0] if len(timesteps) > 0 else 0
     title = fig.suptitle(
-        f"Timestep: 0 / {num_steps - 1}  [Grid: {nx}×{ny}]",
+        f"Timestep: {t0}  (Frame 1 / {num_steps})  [Grid: {nx}×{ny}]",
         fontsize=12,
         fontweight="bold",
     )
@@ -197,8 +210,9 @@ def play_simulation_2d(
             im_h.set_data(h[frame])
             artists.append(im_h)
         status = " [PAUSED]" if is_paused else ""
+        t_val = timesteps[frame] if frame < len(timesteps) else frame
         title.set_text(
-            f"Timestep: {frame} / {num_steps - 1}  [Grid: {nx}×{ny}]{status}"
+            f"Timestep: {t_val}  (Frame {frame + 1} / {num_steps})  [Grid: {nx}×{ny}]{status}"
         )
         return tuple(artists)
 
@@ -249,6 +263,7 @@ def play_simulation_2d(
 def play_simulation_1d(
     ex: np.ndarray,
     hy: np.ndarray,
+    timesteps: np.ndarray | None = None,
     interval: int = 20,
     save_path: str | None = None,
     fps: int = 30,
@@ -256,6 +271,8 @@ def play_simulation_1d(
     """Plays the frames as an animated 2-panel 1D line graph (Ex and Hy)."""
     num_steps, num_cells = ex.shape
     cells = np.arange(num_cells)
+    if timesteps is None:
+        timesteps = np.arange(num_steps)
 
     fig, (ax_e, ax_h) = plt.subplots(2, 1, figsize=(10, 6), sharex=True)
 
@@ -279,7 +296,10 @@ def play_simulation_1d(
     (line_h,) = ax_h.plot(cells, hy[0], color="#d9534f", lw=1.8, label="$H$")
     ax_h.legend(loc="upper right")
 
-    title = fig.suptitle(f"Timestep: 0 / {num_steps - 1}", fontsize=12, fontweight="bold")
+    t0 = timesteps[0] if len(timesteps) > 0 else 0
+    title = fig.suptitle(
+        f"Timestep: {t0}  (Frame 1 / {num_steps})", fontsize=12, fontweight="bold"
+    )
 
     is_paused = False
     current_frame = 0
@@ -290,7 +310,10 @@ def play_simulation_1d(
         line_e.set_ydata(ex[frame])
         line_h.set_ydata(hy[frame])
         status = " [PAUSED]" if is_paused else ""
-        title.set_text(f"Timestep: {frame} / {num_steps - 1}{status}")
+        t_val = timesteps[frame] if frame < len(timesteps) else frame
+        title.set_text(
+            f"Timestep: {t_val}  (Frame {frame + 1} / {num_steps}){status}"
+        )
         return line_e, line_h, title
 
     anim = FuncAnimation(fig, update, frames=num_steps, interval=interval)
@@ -397,7 +420,7 @@ def main():
     shape_tuple = tuple(args.shape) if args.shape else None
 
     try:
-        e_field, h_field, is_2d, grid_dim = load_data(
+        e_field, h_field, is_2d, grid_dim, timesteps = load_data(
             args.filepath, shape=shape_tuple, force_1d=args.force_1d
         )
     except Exception as err:
@@ -415,6 +438,7 @@ def main():
         play_simulation_2d(
             e_field,
             h_field,
+            timesteps=timesteps,
             interval=args.interval,
             save_path=args.save,
             fps=args.fps,
@@ -431,6 +455,7 @@ def main():
         play_simulation_1d(
             e_field,
             h_field,
+            timesteps=timesteps,
             interval=args.interval,
             save_path=args.save,
             fps=args.fps,

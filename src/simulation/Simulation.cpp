@@ -64,7 +64,7 @@ auto simulation::add_source(std::function<float(float)> source,
                             const float pos_x, const float pos_y) -> void {
   const auto i{static_cast<std::size_t>(pos_x / dx_)};
   const auto j{static_cast<std::size_t>(pos_y / dx_)};
-  sources_.emplace_back(std::move(source), j * cols_ + i);
+  sources_.emplace_back(std::move(source), (j * cols_) + i);
 }
 
 } // namespace em::sim

@@ -30,8 +30,8 @@ public:
   auto getHx() -> std::vector<float>& { return grid_.Hxfield(); }
   auto getHy() -> std::vector<float>& { return grid_.Hyfield(); }
 
-  auto Rows() -> std::size_t { return rows_; }
-  auto Cols() -> std::size_t { return cols_; }
+  [[nodiscard]] auto Rows() const noexcept -> std::size_t { return rows_; }
+  [[nodiscard]] auto Cols() const noexcept -> std::size_t { return cols_; }
 
   void setEpsilonDist();
   void setConductanceDist();
