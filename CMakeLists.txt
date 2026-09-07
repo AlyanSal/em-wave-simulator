@@ -59,6 +59,7 @@ add_library(em_core
   src/math/Constants.hpp
   src/memory/Grid.cpp
   src/memory/Grid.hpp
+  src/output/BinaryOutput.hpp
   src/output/Output.hpp
   src/simulation/Simulation.cpp
   src/simulation/Simulation.hpp

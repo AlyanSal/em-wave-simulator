@@ -12,7 +12,8 @@ namespace em::sim {
 
 class simulation {
 public:
-  simulation(float frequency, float width, float length, float largest_eps);
+  simulation(float frequency, float width, float length, float largest_eps,
+             float pml_factor);
 
   void
   setup_simulation(std::function<float(float, float)>& permittivity_function,
@@ -32,6 +33,19 @@ public:
 
   [[nodiscard]] auto Rows() const noexcept -> std::size_t { return rows_; }
   [[nodiscard]] auto Cols() const noexcept -> std::size_t { return cols_; }
+  [[nodiscard]] auto InteriorRows() const noexcept -> std::size_t {
+    return interior_rows_;
+  }
+  [[nodiscard]] auto InteriorCols() const noexcept -> std::size_t {
+    return interior_cols_;
+  }
+  [[nodiscard]] auto PmlCellsX() const noexcept -> std::size_t {
+    return pml_cells_x_;
+  }
+  [[nodiscard]] auto PmlCellsY() const noexcept -> std::size_t {
+    return pml_cells_y_;
+  }
+  [[nodiscard]] auto PmlFactor() const noexcept -> float { return pml_factor_; }
 
   void setEpsilonDist();
   void setConductanceDist();
@@ -42,9 +56,15 @@ private:
   float largest_eps_;
   const float frequency_;
   const float smallest_wavelength_;
+  const float pml_factor_;
 
   const float dx_;
   const float dt_;
+
+  const std::size_t interior_rows_;
+  const std::size_t interior_cols_;
+  const std::size_t pml_cells_x_;
+  const std::size_t pml_cells_y_;
 
   const std::size_t rows_;
   const std::size_t cols_;

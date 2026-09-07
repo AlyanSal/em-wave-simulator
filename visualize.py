@@ -13,85 +13,168 @@ from matplotlib.animation import FuncAnimation
 
 
 def load_data(
-    filepath: str = "output.csv",
+    filepath: str | None = None,
     shape: tuple[int, int] | None = None,
     force_1d: bool = False,
+    is_byte: bool = False,
+    byte_type: str = "auto",
+    vmax_e: float = 1.0,
+    vmax_h: float | None = None,
 ):
     """
-    Load simulation data from CSV (tabular or matrix format).
+    Load simulation data from binary (.bin) or CSV (tabular or matrix format).
+    Supports multi-channel EMW2 binary (Ez, Hx, Hy), raw binary, or CSV.
     Returns (e_field, h_field, is_2d, (rows, cols), timesteps).
     For 2D: fields have shape (num_steps, rows, cols)
     For 1D: fields have shape (num_steps, num_cells)
     """
+    if filepath is None:
+        filepath = "output.bin" if Path("output.bin").exists() else "output.csv"
+
     path = Path(filepath)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {filepath}")
 
-    with open(path, "r", encoding="utf-8") as f:
-        first_line = f.readline().strip()
+    # Check for binary file format (.bin, .dat, .raw)
+    if path.suffix.lower() in (".bin", ".dat", ".raw"):
+        with open(path, "rb") as f:
+            magic = f.read(4)
+            if magic == b"EMW2":
+                version = int.from_bytes(f.read(4), "little")
+                rows = int.from_bytes(f.read(4), "little")
+                cols = int.from_bytes(f.read(4), "little")
+                channels = int.from_bytes(f.read(4), "little")
 
-    headers = (
-        [h.strip().lower() for h in first_line.split(",")]
-        if ("," in first_line and not first_line.replace("-", "").split(",")[0].isdigit())
-        else []
-    )
-
-    is_tabular = any(
-        k in headers
-        for k in ("cell", "ex", "ey", "ez", "hx", "hy", "hz", "row", "col", "x", "y")
-    )
-
-    rows, cols = None, None
-
-    if is_tabular:
-        raw = np.loadtxt(path, delimiter=",", skiprows=1)
-        if raw.ndim == 1:
-            raw = raw.reshape(1, -1)
-
-        # Check for explicit 2D coordinate columns (e.g. timestep, row, col, ...)
-        if ("row" in headers and "col" in headers) or ("y" in headers and "x" in headers):
-            r_idx = headers.index("row") if "row" in headers else headers.index("y")
-            c_idx = headers.index("col") if "col" in headers else headers.index("x")
-            rows = int(raw[:, r_idx].max()) + 1
-            cols = int(raw[:, c_idx].max()) + 1
-            num_cells = rows * cols
-            e_col = max(r_idx, c_idx) + 1
-            h_col = e_col + 1 if raw.shape[1] > e_col + 1 else None
-        elif "cell" in headers:
-            cell_idx = headers.index("cell")
-            num_cells = int(raw[:, cell_idx].max()) + 1
-            e_col = cell_idx + 1
-            h_col = cell_idx + 2 if raw.shape[1] > cell_idx + 2 else None
-        else:
-            num_cells = int(raw[:, 1].max()) + 1
-            e_col = 2
-            h_col = 3 if raw.shape[1] > 3 else None
-
-        num_steps = raw.shape[0] // num_cells
-        if num_steps == 0:
-            raise ValueError(
-                f"File contains {raw.shape[0]} rows, which is less than 1 frame ({num_cells} cells)."
-            )
-
-        valid_len = num_steps * num_cells
-        raw = raw[:valid_len]
-        timesteps = raw[::num_cells, 0].astype(int)
-
-        e_raw = raw[:, e_col]
-        h_raw = (
-            raw[:, h_col]
-            if (h_col is not None and h_col < raw.shape[1])
-            else np.zeros_like(e_raw)
-        )
+                if channels >= 3:
+                    frame_dtype = np.dtype([
+                        ("timestep", "<u4"),
+                        ("ez", "<f4", (rows, cols)),
+                        ("hx", "<f4", (rows, cols)),
+                        ("hy", "<f4", (rows, cols)),
+                    ])
+                    frames = np.fromfile(f, dtype=frame_dtype)
+                    timesteps = frames["timestep"]
+                    e_field = frames["ez"]
+                    # Magnetic field magnitude |H| = sqrt(Hx^2 + Hy^2)
+                    h_field = np.sqrt(frames["hx"] ** 2 + frames["hy"] ** 2)
+                    return e_field, h_field, True, (rows, cols), timesteps
+                elif channels == 1:
+                    frame_dtype = np.dtype([
+                        ("timestep", "<u4"),
+                        ("ez", "<f4", (rows, cols)),
+                    ])
+                    frames = np.fromfile(f, dtype=frame_dtype)
+                    timesteps = frames["timestep"]
+                    e_field = frames["ez"]
+                    h_field = np.zeros_like(e_field)
+                    return e_field, h_field, True, (rows, cols), timesteps
+                else:
+                    raise ValueError(f"Unsupported number of channels: {channels}")
+            else:
+                # Raw unheadered binary file fallback
+                f.seek(0)
+                raw_bytes = np.fromfile(f, dtype=np.int8 if byte_type != "uint8" else np.uint8)
+                if shape is None:
+                    raise ValueError("For raw binary files without EMW2 header, explicit --shape ROWS COLS must be specified.")
+                rows, cols = shape
+                num_cells = rows * cols
+                num_steps = len(raw_bytes) // num_cells
+                raw_bytes = raw_bytes[:num_steps * num_cells]
+                e_raw = raw_bytes.astype(np.float32)
+                h_raw = np.zeros_like(e_raw)
+                timesteps = np.arange(num_steps)
+                is_tabular = False
+                headers = []
     else:
-        # Matrix format (each row = 1 timestep, each col = 1 cell)
-        raw = np.loadtxt(path, delimiter=",")
-        if raw.ndim == 1:
-            raw = raw.reshape(1, -1)
-        num_steps, num_cells = raw.shape
-        timesteps = np.arange(num_steps)
-        e_raw = raw.flatten()
-        h_raw = np.zeros_like(e_raw)
+        with open(path, "r", encoding="utf-8") as f:
+            first_line = f.readline().strip()
+
+        headers = (
+            [h.strip().lower() for h in first_line.split(",")]
+            if ("," in first_line and not first_line.replace("-", "").split(",")[0].isdigit())
+            else []
+        )
+
+        is_tabular = any(
+            k in headers
+            for k in ("cell", "ex", "ey", "ez", "hx", "hy", "hz", "row", "col", "x", "y")
+        )
+
+        rows, cols = None, None
+
+        if is_tabular:
+            raw = np.loadtxt(path, delimiter=",", skiprows=1, dtype=np.float32)
+            if raw.ndim == 1:
+                raw = raw.reshape(1, -1)
+
+            # Check for explicit 2D coordinate columns (e.g. timestep, row, col, ...)
+            if ("row" in headers and "col" in headers) or ("y" in headers and "x" in headers):
+                r_idx = headers.index("row") if "row" in headers else headers.index("y")
+                c_idx = headers.index("col") if "col" in headers else headers.index("x")
+                rows = int(raw[:, r_idx].max()) + 1
+                cols = int(raw[:, c_idx].max()) + 1
+                num_cells = rows * cols
+                e_col = max(r_idx, c_idx) + 1
+                h_col = e_col + 1 if raw.shape[1] > e_col + 1 else None
+            elif "cell" in headers:
+                cell_idx = headers.index("cell")
+                num_cells = int(raw[:, cell_idx].max()) + 1
+                e_col = cell_idx + 1
+                h_col = cell_idx + 2 if raw.shape[1] > cell_idx + 2 else None
+            else:
+                num_cells = int(raw[:, 1].max()) + 1
+                e_col = 2
+                h_col = 3 if raw.shape[1] > 3 else None
+
+            num_steps = raw.shape[0] // num_cells
+            if num_steps == 0:
+                raise ValueError(
+                    f"File contains {raw.shape[0]} rows, which is less than 1 frame ({num_cells} cells)."
+                )
+
+            valid_len = num_steps * num_cells
+            raw = raw[:valid_len]
+            timesteps = raw[::num_cells, 0].astype(int)
+
+            e_raw = raw[:, e_col]
+            h_raw = (
+                raw[:, h_col]
+                if (h_col is not None and h_col < raw.shape[1])
+                else np.zeros_like(e_raw)
+            )
+        else:
+            # Matrix format (each row = 1 timestep, each col = 1 cell)
+            raw = np.loadtxt(path, delimiter=",", dtype=np.float32)
+            if raw.ndim == 1:
+                raw = raw.reshape(1, -1)
+            num_steps, num_cells = raw.shape
+            timesteps = np.arange(num_steps)
+            e_raw = raw.flatten()
+            h_raw = np.zeros_like(e_raw)
+
+    # Convert byte values to floats if requested or detected
+    should_convert_byte = is_byte or (byte_type in ("int8", "uint8"))
+    if not should_convert_byte and byte_type == "auto" and len(e_raw) > 0:
+        e_min, e_max = float(np.min(e_raw)), float(np.max(e_raw))
+        if (e_min >= -128.0 and e_max <= 255.0) and (e_max > 1.5 or e_min < -1.5):
+            sample = e_raw[: min(len(e_raw), 500)]
+            if np.all(np.equal(np.mod(sample, 1), 0)):
+                should_convert_byte = True
+
+    if should_convert_byte:
+        e_min = float(np.min(e_raw)) if len(e_raw) > 0 else 0.0
+        e_max = float(np.max(e_raw)) if len(e_raw) > 0 else 0.0
+        is_uint8 = (byte_type == "uint8") or (byte_type == "auto" and e_min >= 0.0 and e_max > 1.5)
+        scale_h = vmax_h if vmax_h is not None else (vmax_e / 376.73)
+
+        if is_uint8:
+            # Unsigned byte [0, 255] with 128 as zero
+            e_raw = ((e_raw.astype(np.float32) - 128.0) / 127.0) * vmax_e
+            h_raw = ((h_raw.astype(np.float32) - 128.0) / 127.0) * scale_h
+        else:
+            # Signed byte [-128, 127] with 0 as zero
+            e_raw = (e_raw.astype(np.float32) / 127.0) * vmax_e
+            h_raw = (h_raw.astype(np.float32) / 127.0) * scale_h
 
     is_2d = False
     if not force_1d:
@@ -356,11 +439,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Electromagnetic Wave Visualizer (2D Heatmap & 1D Line Graph)"
     )
+    default_file = "output.bin" if Path("output.bin").exists() else "output.csv"
     parser.add_argument(
         "filepath",
         nargs="?",
-        default="output.csv",
-        help="Path to CSV simulation output file (default: output.csv)",
+        default=default_file,
+        help=f"Path to simulation output file (default: {default_file})",
     )
     parser.add_argument(
         "--shape",
@@ -414,6 +498,31 @@ def main():
         action="store_true",
         help="Force 1D line plot visualization",
     )
+    parser.add_argument(
+        "--byte",
+        "-b",
+        dest="is_byte",
+        action="store_true",
+        help="Interpret field values as quantized byte integers and convert to floats",
+    )
+    parser.add_argument(
+        "--byte-type",
+        choices=["auto", "int8", "uint8"],
+        default="auto",
+        help="Byte quantization encoding: int8 (-127..127) or uint8 (0..255) (default: auto)",
+    )
+    parser.add_argument(
+        "--vmax-e",
+        type=float,
+        default=1.0,
+        help="Physical maximum Electric field amplitude for byte scaling (default: 1.0)",
+    )
+    parser.add_argument(
+        "--vmax-h",
+        type=float,
+        default=None,
+        help="Physical maximum Magnetic field amplitude for byte scaling (default: vmax_e / 376.73)",
+    )
 
     args = parser.parse_args()
 
@@ -421,7 +530,13 @@ def main():
 
     try:
         e_field, h_field, is_2d, grid_dim, timesteps = load_data(
-            args.filepath, shape=shape_tuple, force_1d=args.force_1d
+            args.filepath,
+            shape=shape_tuple,
+            force_1d=args.force_1d,
+            is_byte=args.is_byte,
+            byte_type=args.byte_type,
+            vmax_e=args.vmax_e,
+            vmax_h=args.vmax_h,
         )
     except Exception as err:
         print(f"Error loading '{args.filepath}': {err}", file=sys.stderr)

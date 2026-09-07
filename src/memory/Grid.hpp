@@ -14,6 +14,11 @@ namespace em::memory {
 class grid {
 public:
   grid(std::size_t cells);
+  grid(std::size_t rows, std::size_t cols);
+
+  [[nodiscard]] auto Rows() const noexcept -> std::size_t { return rows_; }
+  [[nodiscard]] auto Cols() const noexcept -> std::size_t { return cols_; }
+  [[nodiscard]] auto Cells() const noexcept -> std::size_t { return cells_; }
 
   auto Ezfield() -> std::vector<float>& { return Ezfield_; }
   auto Hxfield() -> std::vector<float>& { return Hxfield_; }
@@ -32,7 +37,28 @@ public:
   auto Chi_1() -> std::vector<float>& { return chi1_; }
   auto T_0() -> std::vector<float>& { return t0_; }
 
+  auto PsiEzx() -> std::vector<float>& { return psi_Ezx_; }
+  auto PsiEzy() -> std::vector<float>& { return psi_Ezy_; }
+  auto PsiHxy() -> std::vector<float>& { return psi_Hxy_; }
+  auto PsiHyx() -> std::vector<float>& { return psi_Hyx_; }
+
+  auto BeX() -> std::vector<float>& { return be_x_; }
+  auto AeX() -> std::vector<float>& { return ae_x_; }
+  auto InvKeX() -> std::vector<float>& { return inv_ke_x_; }
+  auto BhX() -> std::vector<float>& { return bh_x_; }
+  auto AhX() -> std::vector<float>& { return ah_x_; }
+  auto InvKhX() -> std::vector<float>& { return inv_kh_x_; }
+
+  auto BeY() -> std::vector<float>& { return be_y_; }
+  auto AeY() -> std::vector<float>& { return ae_y_; }
+  auto InvKeY() -> std::vector<float>& { return inv_ke_y_; }
+  auto BhY() -> std::vector<float>& { return bh_y_; }
+  auto AhY() -> std::vector<float>& { return ah_y_; }
+  auto InvKhY() -> std::vector<float>& { return inv_kh_y_; }
+
 private:
+  const std::size_t rows_;
+  const std::size_t cols_;
   const std::size_t cells_;
 
   std::vector<float> Ezfield_;
@@ -51,6 +77,25 @@ private:
   std::vector<float> imag_E_;
   std::vector<float> chi1_;
   std::vector<float> t0_;
+
+  std::vector<float> psi_Ezx_;
+  std::vector<float> psi_Ezy_;
+  std::vector<float> psi_Hxy_;
+  std::vector<float> psi_Hyx_;
+
+  std::vector<float> be_x_;
+  std::vector<float> ae_x_;
+  std::vector<float> inv_ke_x_;
+  std::vector<float> bh_x_;
+  std::vector<float> ah_x_;
+  std::vector<float> inv_kh_x_;
+
+  std::vector<float> be_y_;
+  std::vector<float> ae_y_;
+  std::vector<float> inv_ke_y_;
+  std::vector<float> bh_y_;
+  std::vector<float> ah_y_;
+  std::vector<float> inv_kh_y_;
 };
 
 } // namespace em::memory

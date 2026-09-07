@@ -9,6 +9,15 @@ namespace em::math::constants {
 // Divisions per wavelength in memory grid
 inline constexpr std::size_t divs{20};
 
+inline constexpr std::size_t pml_cells{12};
+
+inline constexpr float pml_m{3.5f};
+inline constexpr float pml_r0{1e-6f};
+
+inline constexpr float pml_kappa_max{5.0f};
+inline constexpr float pml_alpha_max{0.05f};
+inline constexpr float pm_alpha_max{pml_alpha_max}; // Backward compatibility alias
+
 /* --- Mathematical Constants --- */
 
 // Speed of light in a vacuum
