@@ -12,8 +12,8 @@ namespace em::output {
 
 /**
  * Fast binary output writer for simulation frames.
- * Writes a compact 20-byte header followed by contiguous raw float32 memory blocks
- * for Ez, Hx, and Hy at each recorded timestep.
+ * Writes a compact 20-byte header followed by contiguous raw float32 memory
+ * blocks for Ez, Hx, and Hy at each recorded timestep.
  */
 class BinaryOutput {
 public:
@@ -54,13 +54,12 @@ public:
   auto operator=(BinaryOutput&&) noexcept -> BinaryOutput& = default;
 
   /**
-   * Writes one simulation frame containing timestep and raw float arrays for Ez, Hx, Hy.
-   * Performs direct memory block transfers without per-cell loops or string formatting.
+   * Writes one simulation frame containing timestep and raw float arrays for
+   * Ez, Hx, Hy. Performs direct memory block transfers without per-cell loops
+   * or string formatting.
    */
-  void write_frame(const std::size_t timestep,
-                   const std::vector<float>& Ez,
-                   const std::vector<float>& Hx,
-                   const std::vector<float>& Hy) {
+  void write_frame(const std::size_t timestep, const std::size_t size,
+                   const float* Ez, const float* Hx, const float* Hy) {
     if (!file_.is_open()) {
       return;
     }
@@ -68,26 +67,27 @@ public:
     const auto t_step{static_cast<uint32_t>(timestep)};
     file_.write(reinterpret_cast<const char*>(&t_step), sizeof(uint32_t));
 
-    const auto expected_cells{static_cast<std::size_t>(rows_) * cols_};
-    const auto e_size{std::min(expected_cells, Ez.size())};
-    const auto hx_size{std::min(expected_cells, Hx.size())};
-    const auto hy_size{std::min(expected_cells, Hy.size())};
+    const auto e_size{size};
+    const auto hx_size{size};
+    const auto hy_size{size};
 
-    file_.write(reinterpret_cast<const char*>(Ez.data()),
+    file_.write(reinterpret_cast<const char*>(Ez),
                 static_cast<std::streamsize>(e_size * sizeof(float)));
 
     if (channels_ >= 2) {
-      file_.write(reinterpret_cast<const char*>(Hx.data()),
+      file_.write(reinterpret_cast<const char*>(Hx),
                   static_cast<std::streamsize>(hx_size * sizeof(float)));
     }
 
     if (channels_ >= 3) {
-      file_.write(reinterpret_cast<const char*>(Hy.data()),
+      file_.write(reinterpret_cast<const char*>(Hy),
                   static_cast<std::streamsize>(hy_size * sizeof(float)));
     }
   }
 
-  [[nodiscard]] auto is_open() const noexcept -> bool { return file_.is_open(); }
+  [[nodiscard]] auto is_open() const noexcept -> bool {
+    return file_.is_open();
+  }
   [[nodiscard]] auto rows() const noexcept -> uint32_t { return rows_; }
   [[nodiscard]] auto cols() const noexcept -> uint32_t { return cols_; }
   [[nodiscard]] auto channels() const noexcept -> uint32_t { return channels_; }
@@ -100,6 +100,3 @@ private:
 };
 
 } // namespace em::output
-
-// Global alias for convenience
-using BinaryOutput = em::output::BinaryOutput;

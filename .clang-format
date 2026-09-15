@@ -1,5 +1,5 @@
 BasedOnStyle: LLVM
 SortIncludes: CaseSensitive
 PackConstructorInitializers: Never
-PointerAlignment: Right
+PointerAlignment: Left
 ReferenceAlignment: Left

@@ -21,30 +21,26 @@ public:
                    std::function<float(float, float)>& chi1_function,
                    std::function<float(float, float)>& t0_function);
 
-  void step_simulation();
+  void step_simulation() noexcept;
 
-  void add_source(std::function<float(float)> source, float pos_x, float pos_y);
+  void add_source(std::function<float(float)> source, float pos_x,
+                  float pos_y) noexcept;
 
-  void handle_sources();
+  void handle_sources() const noexcept;
 
-  auto getEz() -> std::vector<float>& { return grid_.Ezfield(); }
-  auto getHx() -> std::vector<float>& { return grid_.Hxfield(); }
-  auto getHy() -> std::vector<float>& { return grid_.Hyfield(); }
+  [[nodiscard]] auto constexpr getEmData() const noexcept
+      -> std::array<float*, 3> {
+    return {grid_[memory::MainField::EzField],
+            grid_[memory::MainField::HxField],
+            grid_[memory::MainField::HyField]};
+  }
 
-  [[nodiscard]] auto Rows() const noexcept -> std::size_t { return rows_; }
-  [[nodiscard]] auto Cols() const noexcept -> std::size_t { return cols_; }
-  [[nodiscard]] auto InteriorRows() const noexcept -> std::size_t {
-    return interior_rows_;
+  [[nodiscard]] auto constexpr Dims() const noexcept
+      -> std::array<std::size_t, 6> { // NOLINT
+    return {rows_,          cols_,        interior_rows_,
+            interior_cols_, pml_cells_x_, pml_cells_y_};
   }
-  [[nodiscard]] auto InteriorCols() const noexcept -> std::size_t {
-    return interior_cols_;
-  }
-  [[nodiscard]] auto PmlCellsX() const noexcept -> std::size_t {
-    return pml_cells_x_;
-  }
-  [[nodiscard]] auto PmlCellsY() const noexcept -> std::size_t {
-    return pml_cells_y_;
-  }
+
   [[nodiscard]] auto PmlFactor() const noexcept -> float { return pml_factor_; }
 
   void setEpsilonDist();

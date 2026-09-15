@@ -14,17 +14,12 @@ namespace em::kernel {
  * for a time step into the future.
  */
 inline auto calculateFutureDEISFields(
-    const std::size_t Nx, const std::size_t Ny, std::vector<float>& Dz,
-    std::vector<float>& Ez, std::vector<float>& Iz, std::vector<float>& Sz,
-    const std::vector<float>& Hx, const std::vector<float>& Hy,
-    std::vector<float>& psi_Ezx, std::vector<float>& psi_Ezy,
-    const std::vector<float>& be_x, const std::vector<float>& ae_x,
-    const std::vector<float>& inv_ke_x, const std::vector<float>& be_y,
-    const std::vector<float>& ae_y, const std::vector<float>& inv_ke_y,
-    const std::vector<float>& e_den_coeff,
-    const std::vector<float>& i_mult_coeff,
-    const std::vector<float>& s_mult_coeff,
-    const std::vector<float>& s_decay_coeff, const float del_t,
+    const std::size_t Nx, const std::size_t Ny, float* Dz, float* Ez, float* Iz,
+    float* Sz, const float* Hx, const float* Hy, float* psi_Ezx, float* psi_Ezy,
+    const float* be_x, const float* ae_x, const float* inv_ke_x,
+    const float* be_y, const float* ae_y, const float* inv_ke_y,
+    const float* e_den_coeff, const float* i_mult_coeff,
+    const float* s_mult_coeff, const float* s_decay_coeff, const float del_t,
     const float del_x) noexcept -> void {
   const float inv_del_x{1.0f / del_x};
   const float dt_eps0{del_t / math::constants::eps0};
@@ -63,15 +58,14 @@ inline auto calculateFutureDEISFields(
 /**
  * Calculates the H-Field vectors with CPML for a time step into the future
  */
-inline auto calculateFutureHField(
-    const std::size_t Nx, const std::size_t Ny,
-    std::vector<float>& Hx, std::vector<float>& Hy,
-    const std::vector<float>& Ez,
-    std::vector<float>& psi_Hxy, std::vector<float>& psi_Hyx,
-    const std::vector<float>& bh_x, const std::vector<float>& ah_x,
-    const std::vector<float>& inv_kh_x, const std::vector<float>& bh_y,
-    const std::vector<float>& ah_y, const std::vector<float>& inv_kh_y,
-    const float del_t, const float del_x) noexcept -> void {
+inline auto calculateFutureHField(const std::size_t Nx, const std::size_t Ny,
+                                  float* Hx, float* Hy, const float* Ez,
+                                  float* psi_Hxy, float* psi_Hyx,
+                                  const float* bh_x, const float* ah_x,
+                                  const float* inv_kh_x, const float* bh_y,
+                                  const float* ah_y, const float* inv_kh_y,
+                                  const float del_t, const float del_x) noexcept
+    -> void {
   const float inv_del_x{1.0f / del_x};
   const float dt_mu0{del_t / math::constants::mu0};
 
@@ -101,25 +95,27 @@ inline auto calculateFutureHField(
 }
 
 /**
- * Initializes the fields permittivity and conductivity distributions with PML padding offset
+ * Initializes the fields permittivity and conductivity distributions with PML
+ * padding offset
  */
 inline auto initializeFieldConditions(
-    const std::size_t Nx, const std::size_t Ny,
-    const std::size_t pml_cells_x, const std::size_t pml_cells_y,
+    const std::size_t Nx, const std::size_t Ny, const std::size_t pml_cells_x,
+    const std::size_t pml_cells_y,
     std::function<float(float, float)>& permittivity_distribution,
     std::function<float(float, float)>& conductivity_distribution,
     std::function<float(float, float)>& chi_1_distribution,
-    std::function<float(float, float)>& t_0_distribution,
-    std::vector<float>& permittivity, std::vector<float>& conductivity,
-    std::vector<float>& chi_1, std::vector<float>& t_0,
-    const float dx_) noexcept -> void {
+    std::function<float(float, float)>& t_0_distribution, float* permittivity,
+    float* conductivity, float* chi_1, float* t_0, const float dx_) noexcept
+    -> void {
   for (auto j{0uz}; j < Ny; ++j) {
     const bool in_pml_y = (j < pml_cells_y) || (j >= Ny - pml_cells_y);
-    const float pos_y = in_pml_y ? 0.0f : static_cast<float>(j - pml_cells_y) * dx_;
+    const float pos_y =
+        in_pml_y ? 0.0f : static_cast<float>(j - pml_cells_y) * dx_;
 
     for (auto i{0uz}; i < Nx; ++i) {
       const bool in_pml_x = (i < pml_cells_x) || (i >= Nx - pml_cells_x);
-      const float pos_x = in_pml_x ? 0.0f : static_cast<float>(i - pml_cells_x) * dx_;
+      const float pos_x =
+          in_pml_x ? 0.0f : static_cast<float>(i - pml_cells_x) * dx_;
       const std::size_t idx{(j * Nx) + i};
 
       if (in_pml_x || in_pml_y) {
@@ -147,32 +143,24 @@ inline auto initializeFieldConditions(
     std::function<float(float, float)>& permittivity_distribution,
     std::function<float(float, float)>& conductivity_distribution,
     std::function<float(float, float)>& chi_1_distribution,
-    std::function<float(float, float)>& t_0_distribution,
-    std::vector<float>& permittivity, std::vector<float>& conductivity,
-    std::vector<float>& chi_1, std::vector<float>& t_0,
-    const float dx_) noexcept -> void {
+    std::function<float(float, float)>& t_0_distribution, float* permittivity,
+    float* conductivity, float* chi_1, float* t_0, const float dx_) noexcept
+    -> void {
   initializeFieldConditions(Nx, Ny, 0uz, 0uz, permittivity_distribution,
                             conductivity_distribution, chi_1_distribution,
-                            t_0_distribution, permittivity, conductivity,
-                            chi_1, t_0, dx_);
+                            t_0_distribution, permittivity, conductivity, chi_1,
+                            t_0, dx_);
 }
 
 /**
  * Computes 1D CPML parameters (be, ae, inv_ke, bh, ah, inv_kh)
  * for a dimension with total_cells and pml_cells on each boundary.
  */
-inline auto initializeCPML1DProfile(
-    const std::size_t total_cells, const std::size_t pml_cells,
-    std::vector<float>& be, std::vector<float>& ae, std::vector<float>& inv_ke,
-    std::vector<float>& bh, std::vector<float>& ah, std::vector<float>& inv_kh,
-    const float dt, const float dx) noexcept -> void {
-  std::fill(be.begin(), be.end(), 0.0f);
-  std::fill(ae.begin(), ae.end(), 0.0f);
-  std::fill(inv_ke.begin(), inv_ke.end(), 1.0f);
-  std::fill(bh.begin(), bh.end(), 0.0f);
-  std::fill(ah.begin(), ah.end(), 0.0f);
-  std::fill(inv_kh.begin(), inv_kh.end(), 1.0f);
-
+inline auto initializeCPML1DProfile(const std::size_t total_cells,
+                                    const std::size_t pml_cells, float* be,
+                                    float* ae, float* inv_ke, float* bh,
+                                    float* ah, float* inv_kh, const float dt,
+                                    const float dx) noexcept -> void {
   if (pml_cells == 0 || (2uz * pml_cells) >= total_cells) {
     return;
   }
@@ -185,21 +173,23 @@ inline auto initializeCPML1DProfile(
   const float kappa_max{math::constants::pml_kappa_max};
   const float alpha_max{math::constants::pml_alpha_max};
 
-  auto calc_cpml = [&](const float dist, float& b, float& a, float& inv_k) {
-    if (dist <= 0.0f) {
-      return;
-    }
-    const float norm{dist / d};
-    const float norm_m{std::pow(norm, m)};
-    const float sigma{sigma_max * norm_m};
-    const float kappa{1.0f + ((kappa_max - 1.0f) * norm_m)};
-    const float alpha{alpha_max * (1.0f - norm)};
+  auto calc_cpml{
+      [&](const float dist, float& b, float& a, float& inv_k) noexcept -> void {
+        if (dist <= 0.0f) {
+          return;
+        }
+        const float norm{dist / d};
+        const float norm_m{std::pow(norm, m)};
+        const float sigma{sigma_max * norm_m};
+        const float kappa{1.0f + ((kappa_max - 1.0f) * norm_m)};
+        const float alpha{alpha_max * (1.0f - norm)};
 
-    b = std::exp(-((sigma / (kappa * math::constants::eps0)) +
-                   (alpha / math::constants::eps0)) * dt);
-    a = (sigma / (kappa * (sigma + (kappa * alpha)))) * (b - 1.0f);
-    inv_k = 1.0f / kappa;
-  };
+        b = std::exp(-((sigma / (kappa * math::constants::eps0)) +
+                       (alpha / math::constants::eps0)) *
+                     dt);
+        a = (sigma / (kappa * (sigma + (kappa * alpha)))) * (b - 1.0f);
+        inv_k = 1.0f / kappa;
+      }};
 
   for (std::size_t k{0uz}; k < pml_cells; ++k) {
     const float dist_e{static_cast<float>(k + 1uz) * dx};
@@ -220,13 +210,14 @@ inline auto initializeCPML1DProfile(
  * Precomputes the coefficients necessary for the D, E, and I
  * ElectroMagneticFields
  */
-inline auto precomputeDEISCoefficients(
-    const std::size_t N, // NOLINT
-    const std::vector<float>& permittivity,
-    const std::vector<float>& conductivity, const std::vector<float>& chi_1,
-    const std::vector<float>& t_0, std::vector<float>& e_den_coeff,
-    std::vector<float>& i_mult_coeff, std::vector<float>& s_mult_coeff,
-    std::vector<float>& s_decay_coeff, const float del_t) noexcept -> void {
+inline auto precomputeDEISCoefficients(const std::size_t N, // NOLINT
+                                       const float* permittivity,
+                                       const float* conductivity,
+                                       const float* chi_1, const float* t_0,
+                                       float* e_den_coeff, float* i_mult_coeff,
+                                       float* s_mult_coeff,
+                                       float* s_decay_coeff,
+                                       const float del_t) noexcept -> void {
   for (auto i{0uz}; i < N; ++i) {
     const float sig_dt_eps0{(conductivity[i] * del_t) / math::constants::eps0};
     const float dt_over_t0{del_t / t_0[i]};
@@ -238,10 +229,11 @@ inline auto precomputeDEISCoefficients(
   }
 }
 
-inline auto updateFrequencyDomain(
-    const std::size_t N, std::vector<float>& real_E, std::vector<float>& imag_E,
-    const std::vector<float>& EField, const float current_time,
-    const float target_frequency) noexcept -> void {
+inline auto updateFrequencyDomain(const std::size_t N, float* real_E,
+                                  float* imag_E, const float* EField,
+                                  const float current_time,
+                                  const float target_frequency) noexcept
+    -> void {
   const float omega_t{2.0f * math::constants::pi * target_frequency *
                       current_time};
 

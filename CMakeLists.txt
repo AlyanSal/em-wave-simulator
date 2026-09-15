@@ -7,8 +7,8 @@ project(
   LANGUAGES CXX
 )
 
-# Enforce C++23 standard
-set(CMAKE_CXX_STANDARD 23)
+# Enforce C++26 standard
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
