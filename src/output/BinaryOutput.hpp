@@ -10,7 +10,10 @@
 #include <print>
 #include <string>
 #include <thread>
-#include <vector>
+#include <utility>
+
+#include "Buffer.hpp"
+#include "Memory.hpp"
 
 namespace em::output {
 
@@ -42,12 +45,12 @@ public:
     file_.write(reinterpret_cast<const char*>(&cols_), sizeof(cols_));
     file_.write(reinterpret_cast<const char*>(&channels_), sizeof(channels_));
 
-    worker_ = std::thread(&BinaryOutput::writer_loop, this);
+    worker_ = std::jthread([this]() -> void { writer_loop(); });
   }
 
   ~BinaryOutput() {
     {
-      std::lock_guard<std::mutex> lock(mutex_);
+      std::scoped_lock<std::mutex> lock(mutex_);
       done_ = true;
     }
     cv_produce_.notify_one();
@@ -73,7 +76,6 @@ public:
 
     {
       std::unique_lock<std::mutex> lock(mutex_);
-
       cv_consume_.wait(lock, [this] -> bool { return !has_data_; });
 
       char* dst = buf_produce_.data();
@@ -137,8 +139,8 @@ private:
   std::size_t frame_bytes_{0};
 
   // Double Vuffer
-  std::vector<char> buf_produce_;
-  std::vector<char> buf_write_;
+  mem::Buffer<char, mem::default_align<char>> buf_produce_;
+  mem::Buffer<char, mem::default_align<char>> buf_write_;
 
   // Thread Synchro
   std::mutex mutex_;
@@ -146,7 +148,7 @@ private:
   std::condition_variable cv_consume_;
   bool has_data_{false};
   bool done_{false};
-  std::thread worker_;
+  std::jthread worker_;
 };
 
 } // namespace em::output

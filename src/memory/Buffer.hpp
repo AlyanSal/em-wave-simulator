@@ -14,10 +14,23 @@ private:
   std::size_t count_;
   std::unique_ptr<T[], BufferDeleter<T>> data_;
 
+  [[nodiscard]] static constexpr auto
+  calculate_bytes(const std::size_t count) noexcept -> std::size_t {
+    const auto raw_bytes{count * sizeof(T)};
+    return (raw_bytes + alignment - 1uz) & ~(alignment - 1uz);
+  }
+
 public:
   explicit Buffer(std::size_t count)
       : count_{count},
-        data_{std::make_unique<T*>(std::aligned_alloc(alignment, count))} {}
+        data_{static_cast<T*>(
+            std::aligned_alloc(alignment, calculate_bytes(count)))} {}
+
+  Buffer(Buffer&&) noexcept = default;
+  auto operator=(Buffer&&) noexcept -> Buffer& = default;
+
+  Buffer(const Buffer&) = delete;
+  auto operator=(const Buffer&) -> Buffer& = delete;
 
   [[nodiscard]]
   constexpr auto count() const noexcept -> std::size_t {

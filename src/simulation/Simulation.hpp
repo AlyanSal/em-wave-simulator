@@ -30,9 +30,8 @@ public:
 
   [[nodiscard]] auto constexpr getEmData() const noexcept
       -> std::array<float*, 3> {
-    return {grid_[memory::MainField::EzField],
-            grid_[memory::MainField::HxField],
-            grid_[memory::MainField::HyField]};
+    return {grid_[mem::MainField::EzField], grid_[mem::MainField::HxField],
+            grid_[mem::MainField::HyField]};
   }
 
   [[nodiscard]] auto constexpr Dims() const noexcept
@@ -70,7 +69,7 @@ private:
 
   std::size_t timestep_{};
 
-  memory::grid grid_;
+  mem::grid grid_;
 };
 
 } // namespace em::sim
