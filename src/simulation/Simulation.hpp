@@ -13,7 +13,8 @@ namespace em::sim {
 class simulation {
 public:
   simulation(float frequency, float width, float length, float largest_eps,
-             float pml_factor);
+             float pml_factor,
+             std::size_t divs = math::constants::divs);
 
   void
   setup_simulation(std::function<float(float, float)>& permittivity_function,

@@ -6,7 +6,7 @@ using namespace mem;
 
 simulation::simulation(const float frequency, const float width,
                        const float length, const float largest_eps,
-                       const float pml_factor)
+                       const float pml_factor, const std::size_t divs)
     : width_{width},
       length_{length},
       largest_eps_{largest_eps},
@@ -14,7 +14,7 @@ simulation::simulation(const float frequency, const float width,
       smallest_wavelength_{(math::constants::c0 / std::sqrt(largest_eps)) /
                            frequency},
       pml_factor_{std::clamp(pml_factor, 0.0f, 1.0f)},
-      dx_{smallest_wavelength_ / static_cast<float>(math::constants::divs)},
+      dx_{smallest_wavelength_ / static_cast<float>(divs)},
       dt_{dx_ / (2 * math::constants::c0)},
       interior_rows_{static_cast<std::size_t>(width / dx_)},
       interior_cols_{static_cast<std::size_t>(length / dx_)},

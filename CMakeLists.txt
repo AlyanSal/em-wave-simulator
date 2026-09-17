@@ -98,3 +98,36 @@ target_link_libraries(em_wave_simulator PRIVATE em_core)
 set_target_properties(em_wave_simulator PROPERTIES
   OUTPUT_NAME "em-wave-simulator"
 )
+
+# ---------------------------------------------------------------------------
+# Verification & Testing Framework (Catch2 + CTest)
+# ---------------------------------------------------------------------------
+option(BUILD_TESTING "Build verification and unit tests" ON)
+if(BUILD_TESTING)
+  enable_testing()
+  include(FetchContent)
+
+  set(CATCH_DEVELOPMENT_BUILD OFF CACHE BOOL "" FORCE)
+  set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.7.0
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(Catch2)
+  list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+  include(Catch)
+
+  add_executable(em_wave_tests
+    tests/test_speed_of_light.cpp
+    tests/test_fresnel.cpp
+    tests/test_cpml.cpp
+    tests/test_convergence.cpp
+  )
+  target_link_libraries(em_wave_tests PRIVATE em_core Catch2::Catch2WithMain)
+
+  catch_discover_tests(em_wave_tests)
+endif()
+

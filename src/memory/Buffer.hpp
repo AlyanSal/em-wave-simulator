@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstring>
 #include <memory>
 
 namespace em::mem {
@@ -21,10 +22,14 @@ private:
   }
 
 public:
-  explicit Buffer(std::size_t count)
+  explicit Buffer(const std::size_t count)
       : count_{count},
         data_{static_cast<T*>(
-            std::aligned_alloc(alignment, calculate_bytes(count)))} {}
+            std::aligned_alloc(alignment, calculate_bytes(count)))} {
+    if (data_) {
+      std::memset(data_.get(), 0, calculate_bytes(count));
+    }
+  }
 
   Buffer(Buffer&&) noexcept = default;
   auto operator=(Buffer&&) noexcept -> Buffer& = default;
