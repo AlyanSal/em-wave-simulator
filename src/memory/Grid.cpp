@@ -1,6 +1,6 @@
 #include "Grid.hpp"
 
-namespace em::memory {
+namespace em::mem {
 
 /**
  * Constructor for the allocator
@@ -13,4 +13,4 @@ grid::grid(const std::size_t rows, const std::size_t cols)
       pmlx_(cols_, PMLDefaults()),
       pmly_(rows_, PMLDefaults()) {}
 
-} // namespace em::memory
+} // namespace em::mem

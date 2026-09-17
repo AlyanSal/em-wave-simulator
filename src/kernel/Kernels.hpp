@@ -14,12 +14,17 @@ namespace em::kernel {
  * for a time step into the future.
  */
 inline auto calculateFutureDEISFields(
-    const std::size_t Nx, const std::size_t Ny, float* Dz, float* Ez, float* Iz,
-    float* Sz, const float* Hx, const float* Hy, float* psi_Ezx, float* psi_Ezy,
-    const float* be_x, const float* ae_x, const float* inv_ke_x,
-    const float* be_y, const float* ae_y, const float* inv_ke_y,
-    const float* e_den_coeff, const float* i_mult_coeff,
-    const float* s_mult_coeff, const float* s_decay_coeff, const float del_t,
+    const std::size_t Nx, const std::size_t Ny, float* __restrict__ Dz,
+    float* __restrict__ Ez, float* __restrict__ Iz, float* __restrict__ Sz,
+    const float* __restrict__ Hx, const float* __restrict__ Hy,
+    float* __restrict__ psi_Ezx, float* __restrict__ psi_Ezy,
+    const float* __restrict__ be_x, const float* __restrict__ ae_x,
+    const float* __restrict__ inv_ke_x, const float* __restrict__ be_y,
+    const float* __restrict__ ae_y, const float* __restrict__ inv_ke_y,
+    const float* __restrict__ e_den_coeff,
+    const float* __restrict__ i_mult_coeff,
+    const float* __restrict__ s_mult_coeff,
+    const float* __restrict__ s_decay_coeff, const float del_t,
     const float del_x) noexcept -> void {
   const float inv_del_x{1.0f / del_x};
   const float dt_eps0{del_t / math::constants::eps0};
@@ -43,14 +48,15 @@ inline auto calculateFutureDEISFields(
       const float curl_H{(inv_ke_x[i] * dHy_x + psi_Ezx[idx]) -
                          (inv_key * dHx_y + psi_Ezy[idx])};
 
+      const float sz_mult{s_decay_coeff[idx] * Sz[idx]};
+
       Dz[idx] += dt_eps0 * curl_H;
 
-      Ez[idx] = (Dz[idx] - Iz[idx] - (s_decay_coeff[idx] * Sz[idx])) /
-                e_den_coeff[idx];
+      Ez[idx] = (Dz[idx] - Iz[idx] - sz_mult) * e_den_coeff[idx];
 
       Iz[idx] += (i_mult_coeff[idx] * Ez[idx]);
 
-      Sz[idx] = (s_decay_coeff[idx] * Sz[idx]) + (s_mult_coeff[idx] * Ez[idx]);
+      Sz[idx] = sz_mult + (s_mult_coeff[idx] * Ez[idx]);
     }
   }
 }
@@ -58,14 +64,14 @@ inline auto calculateFutureDEISFields(
 /**
  * Calculates the H-Field vectors with CPML for a time step into the future
  */
-inline auto calculateFutureHField(const std::size_t Nx, const std::size_t Ny,
-                                  float* Hx, float* Hy, const float* Ez,
-                                  float* psi_Hxy, float* psi_Hyx,
-                                  const float* bh_x, const float* ah_x,
-                                  const float* inv_kh_x, const float* bh_y,
-                                  const float* ah_y, const float* inv_kh_y,
-                                  const float del_t, const float del_x) noexcept
-    -> void {
+inline auto calculateFutureHField(
+    const std::size_t Nx, const std::size_t Ny, float* __restrict__ Hx,
+    float* __restrict__ Hy, const float* __restrict__ Ez,
+    float* __restrict__ psi_Hxy, float* __restrict__ psi_Hyx,
+    const float* __restrict__ bh_x, const float* __restrict__ ah_x,
+    const float* __restrict__ inv_kh_x, const float* __restrict__ bh_y,
+    const float* __restrict__ ah_y, const float* __restrict__ inv_kh_y,
+    const float del_t, const float del_x) noexcept -> void {
   const float inv_del_x{1.0f / del_x};
   const float dt_mu0{del_t / math::constants::mu0};
 
@@ -104,9 +110,10 @@ inline auto initializeFieldConditions(
     std::function<float(float, float)>& permittivity_distribution,
     std::function<float(float, float)>& conductivity_distribution,
     std::function<float(float, float)>& chi_1_distribution,
-    std::function<float(float, float)>& t_0_distribution, float* permittivity,
-    float* conductivity, float* chi_1, float* t_0, const float dx_) noexcept
-    -> void {
+    std::function<float(float, float)>& t_0_distribution,
+    float* __restrict__ permittivity, float* __restrict__ conductivity,
+    float* __restrict__ chi_1, float* __restrict__ t_0,
+    const float dx_) noexcept -> void {
   for (auto j{0uz}; j < Ny; ++j) {
     const bool in_pml_y = (j < pml_cells_y) || (j >= Ny - pml_cells_y);
     const float pos_y =
@@ -143,9 +150,10 @@ inline auto initializeFieldConditions(
     std::function<float(float, float)>& permittivity_distribution,
     std::function<float(float, float)>& conductivity_distribution,
     std::function<float(float, float)>& chi_1_distribution,
-    std::function<float(float, float)>& t_0_distribution, float* permittivity,
-    float* conductivity, float* chi_1, float* t_0, const float dx_) noexcept
-    -> void {
+    std::function<float(float, float)>& t_0_distribution,
+    float* __restrict__ permittivity, float* __restrict__ conductivity,
+    float* __restrict__ chi_1, float* __restrict__ t_0,
+    const float dx_) noexcept -> void {
   initializeFieldConditions(Nx, Ny, 0uz, 0uz, permittivity_distribution,
                             conductivity_distribution, chi_1_distribution,
                             t_0_distribution, permittivity, conductivity, chi_1,
@@ -156,11 +164,11 @@ inline auto initializeFieldConditions(
  * Computes 1D CPML parameters (be, ae, inv_ke, bh, ah, inv_kh)
  * for a dimension with total_cells and pml_cells on each boundary.
  */
-inline auto initializeCPML1DProfile(const std::size_t total_cells,
-                                    const std::size_t pml_cells, float* be,
-                                    float* ae, float* inv_ke, float* bh,
-                                    float* ah, float* inv_kh, const float dt,
-                                    const float dx) noexcept -> void {
+inline auto initializeCPML1DProfile(
+    const std::size_t total_cells, const std::size_t pml_cells,
+    float* __restrict__ be, float* __restrict__ ae, float* __restrict__ inv_ke,
+    float* __restrict__ bh, float* __restrict__ ah, float* __restrict__ inv_kh,
+    const float dt, const float dx) noexcept -> void {
   if (pml_cells == 0 || (2uz * pml_cells) >= total_cells) {
     return;
   }
@@ -210,14 +218,13 @@ inline auto initializeCPML1DProfile(const std::size_t total_cells,
  * Precomputes the coefficients necessary for the D, E, and I
  * ElectroMagneticFields
  */
-inline auto precomputeDEISCoefficients(const std::size_t N, // NOLINT
-                                       const float* permittivity,
-                                       const float* conductivity,
-                                       const float* chi_1, const float* t_0,
-                                       float* e_den_coeff, float* i_mult_coeff,
-                                       float* s_mult_coeff,
-                                       float* s_decay_coeff,
-                                       const float del_t) noexcept -> void {
+inline auto precomputeDEISCoefficients(
+    const std::size_t N, // NOLINT
+    const float* __restrict__ permittivity,
+    const float* __restrict__ conductivity, const float* __restrict__ chi_1,
+    const float* __restrict__ t_0, float* __restrict__ e_den_coeff,
+    float* __restrict__ i_mult_coeff, float* __restrict__ s_mult_coeff,
+    float* __restrict__ s_decay_coeff, const float del_t) noexcept -> void {
   for (auto i{0uz}; i < N; ++i) {
     const float sig_dt_eps0{(conductivity[i] * del_t) / math::constants::eps0};
     const float dt_over_t0{del_t / t_0[i]};
@@ -225,15 +232,14 @@ inline auto precomputeDEISCoefficients(const std::size_t N, // NOLINT
     i_mult_coeff[i] = sig_dt_eps0;
     s_decay_coeff[i] = std::exp(-dt_over_t0);
     s_mult_coeff[i] = chi_1[i] * dt_over_t0;
-    e_den_coeff[i] = permittivity[i] + sig_dt_eps0 + s_mult_coeff[i];
+    e_den_coeff[i] = 1.0f / (permittivity[i] + sig_dt_eps0 + s_mult_coeff[i]);
   }
 }
 
-inline auto updateFrequencyDomain(const std::size_t N, float* real_E,
-                                  float* imag_E, const float* EField,
-                                  const float current_time,
-                                  const float target_frequency) noexcept
-    -> void {
+inline auto updateFrequencyDomain(
+    const std::size_t N, float* __restrict__ real_E, float* __restrict__ imag_E,
+    const float* __restrict__ EField, const float current_time,
+    const float target_frequency) noexcept -> void {
   const float omega_t{2.0f * math::constants::pi * target_frequency *
                       current_time};
 

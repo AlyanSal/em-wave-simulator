@@ -2,7 +2,7 @@
 
 namespace em::sim {
 
-using namespace memory;
+using namespace mem;
 
 simulation::simulation(const float frequency, const float width,
                        const float length, const float largest_eps,
@@ -47,7 +47,7 @@ auto simulation::setup_simulation(
   kernel::precomputeDEISCoefficients(
       cells_, grid_[MainField::Permittivity], grid_[MainField::Conductivity],
       grid_[MainField::Chi_1], grid_[MainField::T_0],
-      grid_[MainField::E_Coeffs], grid_[MainField::I_Coeffs],
+      grid_[MainField::inv_E_Coeffs], grid_[MainField::I_Coeffs],
       grid_[MainField::SM_Coeffs], grid_[MainField::SD_Coeffs], dt_);
 
   kernel::initializeCPML1DProfile(cols_, pml_cells_x_, grid_[PMLX::BE],
@@ -70,21 +70,21 @@ auto simulation::step_simulation() noexcept -> void {
       grid_[MainField::HxField], grid_[MainField::HyField],
       grid_[MainField::Psi_Ez_x], grid_[MainField::Psi_Ez_y], grid_[PMLX::BE],
       grid_[PMLX::AE], grid_[PMLX::Inv_KE], grid_[PMLY::BE], grid_[PMLY::AE],
-      grid_[PMLY::Inv_KE], grid_[MainField::E_Coeffs],
+      grid_[PMLY::Inv_KE], grid_[MainField::inv_E_Coeffs],
       grid_[MainField::I_Coeffs], grid_[MainField::SM_Coeffs],
       grid_[MainField::SD_Coeffs], dt_, dx_);
 
   kernel::calculateFutureHField(
       cols_, rows_, grid_[MainField::HxField], grid_[MainField::HyField],
       grid_[MainField::EzField], grid_[MainField::Psi_Hx_y],
-      grid_[MainField::Psi_Hx_y], grid_[PMLX::BH], grid_[PMLX::AH],
+      grid_[MainField::Psi_Hy_x], grid_[PMLX::BH], grid_[PMLX::AH],
       grid_[PMLX::Inv_KH], grid_[PMLY::BH], grid_[PMLY::AH],
       grid_[PMLY::Inv_KH], dt_, dx_);
 
-  kernel::updateFrequencyDomain(
-      cells_, grid_[MainField::Real_E], grid_[MainField::Imag_E],
-      grid_[MainField::EzField], dt_ * static_cast<float>(timestep_),
-      frequency_);
+  // kernel::updateFrequencyDomain(
+  //     cells_, grid_[MainField::Real_E], grid_[MainField::Imag_E],
+  //     grid_[MainField::EzField], dt_ * static_cast<float>(timestep_),
+  //     frequency_);
 
   ++timestep_;
 }
@@ -99,8 +99,8 @@ auto simulation::handle_sources() const noexcept -> void {
 }
 
 auto simulation::add_source(std::function<float(float)> source,
-                            const float pos_x,
-                            const float pos_y) noexcept -> void {
+                            const float pos_x, const float pos_y) noexcept
+    -> void {
   const auto i{pml_cells_x_ + static_cast<std::size_t>(pos_x / dx_)};
   const auto j{pml_cells_y_ + static_cast<std::size_t>(pos_y / dx_)};
   if (i < cols_ && j < rows_) {

@@ -8,7 +8,7 @@
 #include "Constants.hpp"
 #include "StructureOfArrays.hpp"
 
-namespace em::memory {
+namespace em::mem {
 
 enum struct MainField : std::uint8_t {
   EzField,
@@ -19,7 +19,7 @@ enum struct MainField : std::uint8_t {
   SzField,
   Permittivity,
   Conductivity,
-  E_Coeffs,
+  inv_E_Coeffs,
   I_Coeffs,
   SM_Coeffs,
   SD_Coeffs,
@@ -85,9 +85,10 @@ private:
   const std::size_t cols_;
   const std::size_t cells_;
 
-  const SoA<float, std::to_underlying(MainField::SIZE)> mainField_;
-  const SoA<float, std::to_underlying(PMLX::SIZE)> pmlx_;
-  const SoA<float, std::to_underlying(PMLY::SIZE)> pmly_;
+  const SoA<float, std::to_underlying(MainField::SIZE), alignof(float)>
+      mainField_;
+  const SoA<float, std::to_underlying(PMLX::SIZE), alignof(float)> pmlx_;
+  const SoA<float, std::to_underlying(PMLY::SIZE), alignof(float)> pmly_;
 };
 
-} // namespace em::memory
+} // namespace em::mem

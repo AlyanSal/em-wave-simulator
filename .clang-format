@@ -3,3 +3,4 @@ SortIncludes: CaseSensitive
 PackConstructorInitializers: Never
 PointerAlignment: Left
 ReferenceAlignment: Left
+IndentPPDirectives: AfterHash

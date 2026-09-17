@@ -25,6 +25,9 @@ target_compile_options(em_compiler_flags INTERFACE
     /permissive-
   >
   $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
+    -march=native
+    -flto
+    -fno-math-errno
     -Wall
     -Wextra
     -Wpedantic
@@ -36,6 +39,12 @@ target_compile_options(em_compiler_flags INTERFACE
     -Woverloaded-virtual
     -Wconversion
     -Wsign-conversion
+  >
+)
+
+target_link_options(em_compiler_flags INTERFACE
+  $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:
+    -flto
   >
 )
 
